@@ -1,0 +1,43 @@
+{
+  "n_perturbations": 200,
+  "delta_var_ratio": {
+    "vanilla_NB": {
+      "median": 0.4295792577299382,
+      "frac_lt_1": 0.69
+    },
+    "alt_loss_Gauss": {
+      "median": 0.18281104193566183,
+      "frac_lt_1": 0.83
+    }
+  },
+  "inter_pert_cosine": {
+    "real": {
+      "mean": 0.08697792314431259
+    },
+    "vanilla_NB": {
+      "mean": 0.8369549907841852,
+      "p10": 0.5442283946728117,
+      "p90": 0.992323681313577
+    },
+    "alt_loss_Gauss": {
+      "mean": 0.7997891532530831,
+      "p10": 0.4008985545233542,
+      "p90": 0.9954580561062198
+    }
+  },
+  "deg_count": {
+    "real": {
+      "median": 7,
+      "p90": 66
+    },
+    "vanilla_NB": {
+      "median": 0,
+      "p90": 0
+    },
+    "alt_loss_Gauss": {
+      "median": 0,
+      "p90": 1
+    }
+  },
+  "verdict": "Alt-loss has mixed effect; marginal change"
+}
