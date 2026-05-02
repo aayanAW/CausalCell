@@ -1,0 +1,50 @@
+{
+  "real": {
+    "n_edges": 328
+  },
+  "ground_truth": "NOTEARS on real ACE",
+  "lambda": 0.05,
+  "w_thresh": 0.1,
+  "gears_vanilla": {
+    "n_edges": 24,
+    "f1": 0.05113636363636363,
+    "precision": 0.375,
+    "recall": 0.027439024390243903,
+    "wall_time": 895.6520419120789
+  },
+  "gears_calibrated": {
+    "n_edges": 0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "wall_time": 0.1751260757446289
+  },
+  "cpa_vanilla": {
+    "n_edges": 18,
+    "f1": 0.04046242774566474,
+    "precision": 0.3888888888888889,
+    "recall": 0.021341463414634148,
+    "wall_time": 276.75445914268494
+  },
+  "cpa_calibrated": {
+    "n_edges": 0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "wall_time": 0.18186497688293457
+  },
+  "geneformer_vanilla": {
+    "n_edges": 7,
+    "f1": 0.011940298507462687,
+    "precision": 0.2857142857142857,
+    "recall": 0.006097560975609756,
+    "wall_time": 11.318762302398682
+  },
+  "geneformer_calibrated": {
+    "n_edges": 0,
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "wall_time": 0.17977595329284668
+  }
+}
