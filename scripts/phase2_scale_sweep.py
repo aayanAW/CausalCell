@@ -112,14 +112,12 @@ def run_gies(expression_matrix, interventions, gene_names, partition_size=20, se
     return set(all_edges)
 
 
-def compute_auprc(predicted_edges, gt_edges, gene_names):
-    """Compute AUPRC treating edges as binary predictions."""
-    all_possible = set()
-    for g1 in gene_names:
-        for g2 in gene_names:
-            if g1 != g2:
-                all_possible.add((g1, g2))
+def compute_metrics(predicted_edges, gt_edges, gene_names):
+    """Compute F1, Precision, Recall for predicted vs ground truth edges.
 
+    These are set-based metrics at the model's single operating point
+    (GIES returns a fixed edge set, not a ranked list).
+    """
     pred_set = set(predicted_edges)
     gt_set = set(gt_edges)
     tp = len(pred_set & gt_set)
@@ -127,22 +125,23 @@ def compute_auprc(predicted_edges, gt_edges, gene_names):
     fn = len(gt_set - pred_set)
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    # Simple AUPRC approximation (single operating point)
-    auprc = precision * recall / (recall + 1e-10) if recall > 0 else 0
-    # Actually use proper binary edge-level AUPRC
-    # Predicted edges = positive, all others = negative
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
     n_total = len(gene_names) * (len(gene_names) - 1)
     n_gt = len(gt_set)
-    random_auprc = n_gt / n_total
+    random_floor = n_gt / n_total
     return {
-        "auprc": float(precision),  # At the single operating point
+        "f1": float(f1),
         "precision": float(precision),
         "recall": float(recall),
         "tp": tp, "fp": fp, "fn": fn,
         "n_edges": len(pred_set),
         "n_gt": len(gt_set),
-        "random_floor": float(random_auprc),
+        "random_floor": float(random_floor),
     }
+
+
+# Keep old name for any references
+compute_auprc = compute_metrics
 
 
 def build_interventional_data(ctrl_X, pert_data, gene_subset, gene_to_varidx,
@@ -252,27 +251,44 @@ def main():
         models[name] = model_preds
         logger.info(f"  {name}: {len(model_preds)} perturbations")
 
-    # ElasticNet: train once on full 200 genes, then subsample
+    # ElasticNet: train proper regression models on control data
+    # NOTE: Previous version used real perturbation means as "predictions" (train/test leakage).
+    # Now we train actual ElasticNet models on control cells and predict perturbation effects.
     from sklearn.linear_model import ElasticNet as SkElasticNet
-    logger.info("Training ElasticNet on 200 genes...")
+    logger.info("Training ElasticNet on 200 genes (proper held-out prediction)...")
     col_idx_all = [gene_to_varidx[g] for g in all_genes]
     rng = np.random.default_rng(SEED)
     ctrl_idx = rng.choice(ctrl_X.shape[0], size=N_CTRL, replace=False)
     X_ctrl_200 = ctrl_X[ctrl_idx][:, col_idx_all]
+    ctrl_mean_200 = X_ctrl_200.mean(axis=0)
 
+    # Train one ElasticNet per target gene using control data
+    enet_models = {}
+    n_all = len(all_genes)
+    for g_idx in range(n_all):
+        feature_idx = [i for i in range(n_all) if i != g_idx]
+        model = SkElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=1000, random_state=0)
+        model.fit(X_ctrl_200[:, feature_idx], X_ctrl_200[:, g_idx])
+        enet_models[g_idx] = model
+    logger.info(f"  Trained {len(enet_models)} ElasticNet models")
+
+    # Predict perturbation effects: knock down target gene -> predict downstream
     enet_preds = {}
     for gene in all_genes:
         if gene not in pert_data_real:
             continue
-        # Target: mean of perturbed cells
-        X_pert = pert_data_real[gene][:, col_idx_all]
-        y_mean = X_pert.mean(axis=0)
-        enet_preds[gene] = y_mean  # ElasticNet "prediction" = real mean (for overlay)
+        g_idx = all_genes.index(gene)
+        input_state = ctrl_mean_200.copy()
+        input_state[g_idx] *= 0.1  # ~90% CRISPRi knockdown
 
-    # Actually do a proper ElasticNet: predict each target gene from perturbation identity
-    # For the scale sweep, the ElasticNet predictions at each scale
-    # are just the real perturbation means (the eval script trains ElasticNet per scale)
-    # To keep it simple and fast, use real means as ElasticNet proxy
+        mean_pred = input_state.copy()
+        for t_idx, enet_model in enet_models.items():
+            if t_idx == g_idx:
+                continue
+            feature_idx = [i for i in range(n_all) if i != t_idx]
+            mean_pred[t_idx] = max(float(enet_model.predict(input_state[feature_idx].reshape(1, -1))[0]), 0.0)
+        enet_preds[gene] = mean_pred
+
     models["elastic_net"] = enet_preds
 
     # Run scale sweep

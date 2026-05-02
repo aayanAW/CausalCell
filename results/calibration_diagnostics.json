@@ -1,0 +1,40 @@
+{
+  "real_reference": {
+    "n_values": 40000,
+    "mean_abs": 0.24101109918947222,
+    "frac_large": 0.11385,
+    "frac_near_zero": 0.370025
+  },
+  "per_model": {
+    "gears": {
+      "frac_large_pre": 0.9656926463451204,
+      "mean_abs_pre": NaN,
+      "frac_near_zero_pre": 0.01045575888316979,
+      "frac_large_post": 0.11249697042963269,
+      "mean_abs_post": NaN,
+      "frac_near_zero_post": 0.365705674231252,
+      "inflation_ratio_pre_to_real": 35.766394309078535,
+      "inflation_ratio_post_to_real": 4.166554460356767
+    },
+    "cpa": {
+      "frac_large_pre": 0.9766436996379774,
+      "mean_abs_pre": 5.5608276044314655,
+      "frac_near_zero_pre": 0.020606095994394488,
+      "frac_large_post": 0.11381116431157305,
+      "mean_abs_post": 0.24183269306632968,
+      "frac_near_zero_post": 0.3699556230293122,
+      "inflation_ratio_pre_to_real": 36.17198887548064,
+      "inflation_ratio_post_to_real": 4.215228307836039
+    },
+    "geneformer": {
+      "frac_large_pre": 0.9767616913107907,
+      "mean_abs_pre": 5.534442046760106,
+      "frac_near_zero_pre": 0.02322862732118362,
+      "frac_large_post": 0.11381113708272547,
+      "mean_abs_post": 0.24183275679751567,
+      "frac_near_zero_post": 0.36995593162291796,
+      "inflation_ratio_pre_to_real": 36.176358937436696,
+      "inflation_ratio_post_to_real": 4.215227299360203
+    }
+  }
+}

@@ -313,38 +313,100 @@ def run_grnboost(cb_input, n_top=None):
 # Evaluation Metrics
 # =====================================================================
 
-def compute_auprc(predicted_edges, ground_truth_edges, all_genes, edge_weights=None, seed=0):
-    """Compute AUPRC. If no edge_weights, shuffle edges to remove order bias.
+def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
+                        edge_weights=None, seed: int = 0) -> dict:
+    """Compute F1, Precision, Recall, and AUPRC for predicted vs ground truth edges.
 
-    GIES returns edges in arbitrary partition-iteration order (no confidence).
-    Using rank-based scores on arbitrary order makes AUPRC depend on partition
-    randomization. Fix: shuffle edges so AUPRC reflects set overlap, not order.
+    Primary metrics (set-based, no confidence scores needed):
+      - F1, Precision, Recall at the model's operating point
+    Secondary metric:
+      - AUPRC via top-k sweep (varies k from 10 to N to trace a PR curve)
+    Legacy metric (kept for backward compatibility):
+      - Shuffled-AUPRC (original method — documented as approximate)
+
+    Parameters
+    ----------
+    predicted_edges : collection of (source, target) tuples
+    ground_truth_edges : set of (source, target) tuples
+    all_genes : list of gene names
+    edge_weights : optional dict of edge -> float confidence
+    seed : random seed for shuffle-based AUPRC
     """
-    if not predicted_edges:
-        return {"auprc": 0.0, "precision_at_100": 0.0, "n_predicted": 0,
-                "n_ground_truth": len(ground_truth_edges), "n_true_positive": 0}
+    pred_set = set(predicted_edges)
+    gt_set = set(ground_truth_edges)
+    n_pred = len(pred_set)
+    n_gt = len(gt_set)
 
-    # Shuffle edges to remove arbitrary ordering bias when no weights given
-    if edge_weights is None:
-        rng_auprc = np.random.default_rng(seed)
-        predicted_edges = list(predicted_edges)
-        rng_auprc.shuffle(predicted_edges)
+    if n_pred == 0:
+        return {"f1": 0.0, "precision": 0.0, "recall": 0.0,
+                "auprc": 0.0, "auprc_topk": 0.0, "precision_at_100": 0.0,
+                "n_predicted": 0, "n_ground_truth": n_gt, "n_true_positive": 0}
 
-    y_true = np.array([1 if e in ground_truth_edges else 0 for e in predicted_edges])
+    tp = len(pred_set & gt_set)
+    precision = tp / n_pred if n_pred > 0 else 0.0
+    recall = tp / n_gt if n_gt > 0 else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+
+    # --- Top-k AUPRC: sweep k to build a proper PR curve ---
+    # For unweighted edge sets, vary the number of predicted edges considered
+    # to trace precision-recall at different operating points
+    predicted_list = list(predicted_edges)
     if edge_weights is not None:
-        y_score = np.array([edge_weights.get(e, 0.0) for e in predicted_edges])
+        predicted_list.sort(key=lambda e: edge_weights.get(e, 0.0), reverse=True)
     else:
-        y_score = np.linspace(1.0, 0.0, len(predicted_edges))
+        # Shuffle to remove partition-order bias, then sweep top-k
+        rng_auprc = np.random.default_rng(seed)
+        rng_auprc.shuffle(predicted_list)
 
-    if y_true.sum() == 0:
-        return {"auprc": 0.0, "precision_at_100": 0.0, "n_predicted": len(predicted_edges),
-                "n_ground_truth": len(ground_truth_edges), "n_true_positive": 0}
+    # Sweep k from 10 to N in steps, computing precision and recall at each k
+    # Anchor at (recall=0, precision=1.0) per standard PR curve convention
+    precisions_topk, recalls_topk = [1.0], [0.0]
+    step = max(1, n_pred // 50)  # ~50 operating points
+    for k in range(step, n_pred + 1, step):
+        topk = set(predicted_list[:k])
+        tp_k = len(topk & gt_set)
+        p_k = tp_k / k
+        r_k = tp_k / n_gt if n_gt > 0 else 0.0
+        precisions_topk.append(p_k)
+        recalls_topk.append(r_k)
+    # Always include the full set
+    if recalls_topk[-1] != recall:
+        precisions_topk.append(precision)
+        recalls_topk.append(recall)
+    # Sort by recall to ensure monotonic x-axis for trapz
+    order = np.argsort(recalls_topk)
+    recalls_sorted = np.array(recalls_topk)[order]
+    precs_sorted = np.array(precisions_topk)[order]
+    auprc_topk = float(np.trapz(precs_sorted, recalls_sorted)) if len(recalls_sorted) > 1 else precision
 
-    auprc_val = float(average_precision_score(y_true, y_score))
+    # --- Legacy shuffled AUPRC (for backward compatibility) ---
+    y_true = np.array([1 if e in gt_set else 0 for e in predicted_list])
+    if edge_weights is not None:
+        y_score = np.array([edge_weights.get(e, 0.0) for e in predicted_list])
+    else:
+        y_score = np.linspace(1.0, 0.0, len(predicted_list))
+    auprc_legacy = float(average_precision_score(y_true, y_score)) if y_true.sum() > 0 else 0.0
+
+    # --- Precision@100 ---
     p100 = float(y_true[:min(100, len(y_true))].sum() / min(100, len(y_true))) if len(y_true) > 0 else 0.0
-    return {"auprc": auprc_val, "precision_at_100": p100,
-            "n_predicted": len(predicted_edges), "n_ground_truth": len(ground_truth_edges),
-            "n_true_positive": int(y_true.sum())}
+
+    return {
+        "f1": round(f1, 6),
+        "precision": round(precision, 6),
+        "recall": round(recall, 6),
+        "auprc": round(auprc_legacy, 6),
+        "auprc_topk": round(auprc_topk, 6),
+        "precision_at_100": round(p100, 6),
+        "n_predicted": n_pred,
+        "n_ground_truth": n_gt,
+        "n_true_positive": tp,
+    }
+
+
+# Backward-compatible alias
+def compute_auprc(predicted_edges, ground_truth_edges, all_genes, edge_weights=None, seed=0):
+    """Legacy wrapper — calls compute_set_metrics and returns compatible dict."""
+    return compute_set_metrics(predicted_edges, ground_truth_edges, all_genes, edge_weights, seed)
 
 
 def compute_random_auprc(ground_truth_edges, all_genes, n_samples=50, seed=0):
@@ -403,7 +465,17 @@ def mean_wasserstein_distance(predicted_edges, expression_matrix, interventions,
     return {"mean_wasserstein": float(np.mean(distances)), "n_evaluated": len(distances)}
 
 
-def false_omission_rate(predicted_edges, expression_matrix, interventions, gene_names, alpha=0.05):
+def false_omission_rate(predicted_edges, expression_matrix, interventions,
+                        gene_names, alpha: float = 0.05) -> dict:
+    """Compute False Omission Rate with GLOBAL Benjamini-Hochberg correction.
+
+    FOR = fraction of non-predicted edges that show significant differential
+    expression (i.e., edges the model missed but are biologically real).
+
+    FDR correction is applied GLOBALLY across all source-target pairs tested
+    (not per-source gene), which is the statistically correct approach for
+    controlling the false discovery rate across ~N^2 tests.
+    """
     predicted_set = set(predicted_edges)
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     ctrl_idx = np.array([i for i, v in enumerate(interventions) if v == "non-targeting"])
@@ -413,7 +485,9 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions, gene_
             pert_groups.setdefault(v, []).append(i)
     pert_groups = {k: np.array(v) for k, v in pert_groups.items()}
 
+    # Collect ALL p-values globally across all source-target pairs
     p_values_list = []
+    test_pairs = []  # track which (src, tgt) each p-value corresponds to
     for src in sorted(pert_groups.keys()):
         if src not in gene_to_idx:
             continue
@@ -431,6 +505,7 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions, gene_
                     alternative="two-sided",
                 )
                 p_values_list.append(p)
+                test_pairs.append((src, tgt))
             except ValueError:
                 continue
 
@@ -438,7 +513,7 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions, gene_
         return {"for_rate": 0.0, "n_false_omissions": 0, "n_tested": 0}
 
     p_arr = np.array(p_values_list)
-    # Benjamini-Hochberg
+    # Global Benjamini-Hochberg across ALL tests
     n = len(p_arr)
     sorted_idx = np.argsort(p_arr)
     sorted_p = p_arr[sorted_idx]
@@ -447,8 +522,11 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions, gene_
     if not below.any():
         n_false_omissions = 0
     else:
+        # BH: find the largest k such that p_(k) <= alpha * k / n
         max_k = np.max(np.where(below)[0])
-        n_false_omissions = int(max_k + 1)
+        # All tests with rank <= max_k are significant
+        significant_idx = sorted_idx[:max_k + 1]
+        n_false_omissions = len(significant_idx)
 
     return {"for_rate": n_false_omissions / n, "n_false_omissions": n_false_omissions, "n_tested": n}
 
@@ -767,22 +845,195 @@ MODEL_CONFIGS = {
 
 
 # =====================================================================
+# Prediction Accuracy Metrics
+# =====================================================================
+
+def compute_prediction_accuracy(model_pert_matrices: list, model_pert_labels: list,
+                                real_pert_matrices: list, real_pert_labels: list,
+                                gene_subset: list) -> dict:
+    """Compare model predictions to real perturbation means.
+
+    Computes MSE, Pearson r, and cosine similarity between predicted and
+    observed mean expression vectors across all perturbations.
+
+    This disentangles prediction accuracy from causal graph quality:
+    if a model predicts well but has poor causal graphs, that's informative.
+    """
+    from scipy.stats import pearsonr
+    from scipy.spatial.distance import cosine as cosine_dist
+
+    # Group matrices by gene — each matrix corresponds to one gene's cells
+    real_by_gene = {}
+    offset = 0
+    for mat in real_pert_matrices:
+        n = mat.shape[0]
+        if n == 0:
+            continue
+        gene = real_pert_labels[offset]
+        real_by_gene[gene] = mat.mean(axis=0)
+        offset += n
+
+    model_by_gene = {}
+    offset = 0
+    for mat in model_pert_matrices:
+        n = mat.shape[0]
+        if n == 0:
+            continue
+        gene = model_pert_labels[offset]
+        model_by_gene[gene] = mat.mean(axis=0)
+        offset += n
+
+    # Compute metrics over shared genes
+    shared = sorted(set(real_by_gene) & set(model_by_gene))
+    if len(shared) < 2:
+        return {"mse": float("nan"), "pearson_r": float("nan"),
+                "cosine_sim": float("nan"), "n_genes_compared": len(shared)}
+
+    real_vecs = np.array([real_by_gene[g] for g in shared])
+    model_vecs = np.array([model_by_gene[g] for g in shared])
+
+    # Per-gene MSE then average
+    mse = float(np.mean((real_vecs - model_vecs) ** 2))
+
+    # Flatten for global Pearson r
+    r_val, _ = pearsonr(real_vecs.ravel(), model_vecs.ravel())
+
+    # Mean cosine similarity across genes
+    cos_sims = []
+    for i in range(len(shared)):
+        norm_r = np.linalg.norm(real_vecs[i])
+        norm_m = np.linalg.norm(model_vecs[i])
+        if norm_r > 0 and norm_m > 0:
+            cos_sims.append(1.0 - cosine_dist(real_vecs[i], model_vecs[i]))
+    mean_cos = float(np.mean(cos_sims)) if cos_sims else float("nan")
+
+    return {
+        "mse": round(mse, 6),
+        "pearson_r": round(float(r_val), 6),
+        "cosine_sim": round(mean_cos, 6),
+        "n_genes_compared": len(shared),
+    }
+
+
+# =====================================================================
+# Bootstrap Confidence Intervals
+# =====================================================================
+
+def bootstrap_evaluate(edges_list: list, gt_edges: set, gene_subset: list,
+                       n_bootstrap: int = 200, seed: int = 0,
+                       confidence: float = 0.95) -> dict:
+    """Compute bootstrap 95% CIs for set-based metrics.
+
+    Resamples predicted edges (with replacement) and computes metrics
+    on each bootstrap sample. Reports mean, std, and CI bounds.
+
+    Parameters
+    ----------
+    edges_list : list of (source, target) tuples — the predicted edges
+    gt_edges : set of ground truth edges
+    gene_subset : list of gene names
+    n_bootstrap : number of bootstrap iterations
+    seed : random seed
+    confidence : confidence level (default 0.95 for 95% CI)
+    """
+    rng = np.random.default_rng(seed)
+    n_edges = len(edges_list)
+
+    if n_edges == 0:
+        empty = {"mean": 0.0, "std": 0.0, "ci_lo": 0.0, "ci_hi": 0.0}
+        return {m: empty.copy() for m in ["f1", "precision", "recall", "auprc"]}
+
+    boot_metrics = {m: [] for m in ["f1", "precision", "recall", "auprc"]}
+
+    for b in range(n_bootstrap):
+        # Resample edges with replacement
+        idx = rng.choice(n_edges, size=n_edges, replace=True)
+        boot_edges = [edges_list[i] for i in idx]
+        # Deduplicate (resampling may duplicate edges)
+        boot_edges_unique = list(set(boot_edges))
+
+        m = compute_set_metrics(boot_edges_unique, gt_edges, gene_subset, seed=seed + b)
+        for k in boot_metrics:
+            boot_metrics[k].append(m[k])
+
+    alpha = 1.0 - confidence
+    result = {}
+    for metric_name, values in boot_metrics.items():
+        arr = np.array(values)
+        result[metric_name] = {
+            "mean": round(float(np.mean(arr)), 6),
+            "std": round(float(np.std(arr)), 6),
+            "ci_lo": round(float(np.percentile(arr, 100 * alpha / 2)), 6),
+            "ci_hi": round(float(np.percentile(arr, 100 * (1 - alpha / 2))), 6),
+        }
+
+    return result
+
+
+def pairwise_permutation_test(edges_a: list, edges_b: list, gt_edges: set,
+                              gene_subset: list, n_perm: int = 1000,
+                              seed: int = 0) -> dict:
+    """Paired permutation test: is condition A significantly better than B?
+
+    Randomly swaps edges between A and B, computes F1 difference.
+    P-value = fraction of permutations where shuffled difference >= observed.
+    """
+    rng = np.random.default_rng(seed)
+
+    m_a = compute_set_metrics(edges_a, gt_edges, gene_subset)
+    m_b = compute_set_metrics(edges_b, gt_edges, gene_subset)
+    observed_diff = m_a["f1"] - m_b["f1"]
+
+    # Pool all edges from both conditions
+    all_edges = list(set(edges_a) | set(edges_b))
+    n_a = len(set(edges_a))
+    n_total = len(all_edges)
+
+    perm_diffs = []
+    for _ in range(n_perm):
+        perm_idx = rng.permutation(n_total)
+        perm_a = [all_edges[i] for i in perm_idx[:n_a]]
+        perm_b = [all_edges[i] for i in perm_idx[n_a:]]
+        pm_a = compute_set_metrics(perm_a, gt_edges, gene_subset)
+        pm_b = compute_set_metrics(perm_b, gt_edges, gene_subset)
+        perm_diffs.append(pm_a["f1"] - pm_b["f1"])
+
+    perm_diffs = np.array(perm_diffs)
+    p_value = float(np.mean(np.abs(perm_diffs) >= abs(observed_diff)))
+
+    return {
+        "f1_a": m_a["f1"], "f1_b": m_b["f1"],
+        "observed_diff": round(observed_diff, 6),
+        "p_value": round(p_value, 6),
+        "significant_005": p_value < 0.05,
+    }
+
+
+# =====================================================================
 # Full Evaluation for a Condition
 # =====================================================================
 
 def evaluate_condition(name, edges, cb_input, gt_edges, gene_subset, wall_time=0.0):
-    """Compute all 5 metrics for a condition."""
-    auprc = compute_auprc(edges, gt_edges, gene_subset)
+    """Compute all metrics for a condition.
+
+    Primary: F1, Precision, Recall (set-based, no confidence scores needed)
+    Secondary: AUPRC (top-k sweep), P@100, SHD
+    Distributional: Wasserstein distance, False Omission Rate
+    """
+    metrics = compute_set_metrics(edges, gt_edges, gene_subset)
     shd = structural_hamming_distance(edges, gt_edges)
     ws = mean_wasserstein_distance(edges, cb_input.expression_matrix, cb_input.interventions, gene_subset)
     fr = false_omission_rate(edges, cb_input.expression_matrix, cb_input.interventions, gene_subset)
-    pk100 = precision_at_k(edges, gt_edges, 100)
 
     return {
         "n_edges": len(edges),
-        "auprc": auprc["auprc"],
-        "precision_at_100": pk100,
-        "n_true_positive": auprc["n_true_positive"],
+        "f1": metrics["f1"],
+        "precision": metrics["precision"],
+        "recall": metrics["recall"],
+        "auprc": metrics["auprc"],
+        "auprc_topk": metrics["auprc_topk"],
+        "precision_at_100": metrics["precision_at_100"],
+        "n_true_positive": metrics["n_true_positive"],
         "shd": shd,
         "wasserstein": ws,
         "false_omission": fr,
@@ -995,13 +1246,12 @@ def main(args):
                 real_models_loaded.add(model_name)
                 logger.info("  %s (real): %d cells (%.1fs)", model_name, cb.total_cells, time.time() - t0)
 
-    # --- Model stubs ---
-    # ctrl_X_full for mean/correlation computation (fair vs ElasticNet),
-    # ctrl_X (subsampled 200) for overlay sampling base (matches GIES controls)
-    skip_stubs = getattr(args, 'skip_stubs', False) and real_models_loaded
-    if skip_stubs:
-        logger.info("Step 4: Skipping model stubs (--skip-stubs with real outputs loaded)")
-    else:
+    # --- Model stubs (DEPRECATED — only used when no real model outputs available) ---
+    # Stubs use arbitrary parameters and are not suitable for publication.
+    # Always prefer real model outputs via --model-outputs-dir.
+    use_stubs = getattr(args, 'use_stubs', False) and not real_models_loaded
+    if use_stubs:
+        logger.warning("Step 4: Running model stubs (DEPRECATED — use --model-outputs-dir for real outputs)")
         for model_name, cfg in MODEL_CONFIGS.items():
             logger.info("Step 4: %s stub", model_name)
             t0 = time.time()
@@ -1012,6 +1262,8 @@ def main(args):
             cb = build_cb_input(ctrl_X, mats, labels, gene_subset)
             conditions_data[model_name] = {"cb": cb, "prep_time": time.time() - t0}
             logger.info("  %s: %d cells (%.1fs)", model_name, cb.total_cells, conditions_data[model_name]["prep_time"])
+    elif not real_models_loaded:
+        logger.info("Step 4: No real model outputs found and stubs disabled. Use --model-outputs-dir or --use-stubs.")
 
     # --- Random baseline ---
     cb_rand = None
@@ -1066,6 +1318,112 @@ def main(args):
                     json.dump({"edges": [list(e) for e in edges], "gies_time": t_gies}, f)
         edges_by_condition[cond_name] = edges
         cond_data["gies_time"] = t_gies
+
+    # ------------------------------------------------------------------
+    # Step 5b: Run inspre on all conditions (second causal discovery backend)
+    # ------------------------------------------------------------------
+    inspre_edges_by_condition = {}
+    if getattr(args, 'run_inspre', False):
+        logger.info("Step 5b: Running inspre causal discovery")
+        import subprocess
+        import tempfile
+        import pandas as pd_inspre
+
+        # Find Rscript
+        rscript_paths = ["/opt/mamba/envs/renv/bin/Rscript", "/usr/local/bin/Rscript",
+                         "/usr/bin/Rscript", "Rscript"]
+        rscript = None
+        for rp in rscript_paths:
+            if os.path.exists(rp) or rp == "Rscript":
+                rscript = rp
+                break
+
+        if rscript:
+            r_inspre_code = '''
+library(inspre)
+args <- commandArgs(trailingOnly = TRUE)
+ace_path <- args[1]
+out_path <- args[2]
+target_edges <- as.integer(args[3])
+R_hat <- as.matrix(read.csv(ace_path, header=FALSE))
+result <- fit_inspre_from_R(R_hat = R_hat, its = 200, verbose = 0, train_prop = 0.8)
+G_hat <- result$G_hat
+lambdas <- result$lambda
+test_err <- result$test_error
+valid_te <- !is.nan(test_err) & !is.na(test_err)
+if (any(valid_te)) {
+    best_idx <- which(valid_te)[which.min(test_err[valid_te])]
+} else {
+    edge_counts <- sapply(1:dim(G_hat)[3], function(i) sum(abs(G_hat[,,i]) > 1e-6))
+    best_idx <- which.min(abs(edge_counts - target_edges))
+}
+G_best <- G_hat[,,best_idx]
+write.csv(G_best, out_path, row.names=FALSE)
+'''
+            # Compute ACE matrices for each condition
+            ctrl_mean_flat = ctrl_X.mean(axis=0)
+            for cond_name, cond_data in all_conditions.items():
+                inspre_cache = os.path.join(gies_cache, f"{cond_name}_inspre_edges.json") if gies_cache else None
+                if inspre_cache and os.path.exists(inspre_cache):
+                    with open(inspre_cache) as f:
+                        cached = json.load(f)
+                    inspre_edges_by_condition[cond_name] = set(tuple(e) for e in cached["edges"])
+                    logger.info("  inspre %s: CACHED (%d edges)", cond_name, len(inspre_edges_by_condition[cond_name]))
+                    continue
+
+                cb = cond_data["cb"]
+                # Compute per-gene perturbation means for ACE
+                pert_means = {}
+                for gene in gene_subset:
+                    mask = np.array([lab == gene for lab in cb.interventions])
+                    if mask.sum() < 2:
+                        continue
+                    pert_means[gene] = cb.expression_matrix[mask].mean(axis=0)
+
+                # Build ACE matrix: ACE[i,j] = E[Xj|do(gi)] - E[Xj|ctrl]
+                n_g = len(gene_subset)
+                gene_to_gidx = {g: i for i, g in enumerate(gene_subset)}
+                ace = np.zeros((n_g, n_g), dtype=np.float64)
+                for gene, pm in pert_means.items():
+                    if gene in gene_to_gidx:
+                        ace[gene_to_gidx[gene], :] = pm - ctrl_mean_flat
+
+                target_n = max(len(edges_by_condition.get("real_data", [])), 10)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    ace_path = os.path.join(tmpdir, "ace.csv")
+                    out_path = os.path.join(tmpdir, "adj.csv")
+                    r_path = os.path.join(tmpdir, "run.R")
+                    np.savetxt(ace_path, ace, delimiter=",")
+                    with open(r_path, "w") as f:
+                        f.write(r_inspre_code)
+                    try:
+                        t0 = time.time()
+                        result = subprocess.run(
+                            [rscript, r_path, ace_path, out_path, str(target_n)],
+                            capture_output=True, text=True, timeout=600,
+                        )
+                        t_inspre = time.time() - t0
+                        if result.returncode == 0 and os.path.exists(out_path):
+                            adj = pd_inspre.read_csv(out_path).values
+                            edges = set()
+                            for i in range(n_g):
+                                for j in range(n_g):
+                                    if i != j and abs(adj[i, j]) > 1e-6:
+                                        edges.add((gene_subset[i], gene_subset[j]))
+                            inspre_edges_by_condition[cond_name] = edges
+                            logger.info("  inspre %s: %d edges (%.1fs)", cond_name, len(edges), t_inspre)
+                            if inspre_cache:
+                                with open(inspre_cache, "w") as f:
+                                    json.dump({"edges": [list(e) for e in edges], "time": t_inspre}, f)
+                        else:
+                            logger.warning("  inspre %s failed: %s", cond_name, result.stderr[-200:] if result.stderr else "unknown")
+                    except subprocess.TimeoutExpired:
+                        logger.warning("  inspre %s timed out", cond_name)
+                    except FileNotFoundError:
+                        logger.warning("  Rscript not found — skipping inspre")
+                        break
+        else:
+            logger.warning("  Rscript not found — skipping inspre")
 
     # ------------------------------------------------------------------
     # Step 6: Run GRNBoost2 on real data (observational baseline)
@@ -1130,7 +1488,9 @@ def main(args):
         wall_time = cond_data["prep_time"] + cond_data.get("gies_time", 0)
         if cond_name == "real_data":
             results[cond_name] = {
-                "n_edges": len(edges), "auprc": 1.0, "precision_at_100": 1.0,
+                "n_edges": len(edges),
+                "f1": 1.0, "precision": 1.0, "recall": 1.0,
+                "auprc": 1.0, "auprc_topk": 1.0, "precision_at_100": 1.0,
                 "n_true_positive": len(edges),
                 "shd": {"shd": 0, "missing": 0, "extra": 0, "reversed": 0},
                 "wasserstein": mean_wasserstein_distance(edges, cond_data["cb"].expression_matrix, cond_data["cb"].interventions, gene_subset),
@@ -1154,12 +1514,124 @@ def main(args):
             "dcdi_real", edges_dcdi_real, cb_real, gt_edges, gene_subset, t_dcdi,
         )
 
+    # inspre results (if available) — evaluate against GIES ground truth
+    inspre_results = {}
+    if inspre_edges_by_condition:
+        logger.info("  Evaluating inspre results against GIES ground truth:")
+        for cond_name, inspre_edges in inspre_edges_by_condition.items():
+            cb = all_conditions.get(cond_name, {}).get("cb")
+            if cb is None:
+                continue
+            inspre_metrics = compute_set_metrics(list(inspre_edges), gt_edges, gene_subset)
+            inspre_results[cond_name] = {
+                "n_edges": len(inspre_edges),
+                "f1": inspre_metrics["f1"],
+                "precision": inspre_metrics["precision"],
+                "recall": inspre_metrics["recall"],
+                "n_true_positive": inspre_metrics["n_true_positive"],
+            }
+            logger.info("    inspre %s: F1=%.4f, P=%.4f, R=%.4f (%d edges)",
+                        cond_name, inspre_metrics["f1"], inspre_metrics["precision"],
+                        inspre_metrics["recall"], len(inspre_edges))
+
+        # Also compute inspre-on-real as alternative ground truth
+        if "real_data" in inspre_edges_by_condition:
+            inspre_gt = inspre_edges_by_condition["real_data"]
+            logger.info("  Evaluating GIES results against inspre ground truth (%d edges):", len(inspre_gt))
+            for cond_name in results:
+                if cond_name == "real_data":
+                    continue
+                gies_edges = list(edges_by_condition.get(cond_name, []))
+                if gies_edges:
+                    m = compute_set_metrics(gies_edges, inspre_gt, gene_subset)
+                    logger.info("    GIES %s vs inspre-GT: F1=%.4f", cond_name, m["f1"])
+
+    # ------------------------------------------------------------------
+    # Step 7b: Bootstrap confidence intervals
+    # ------------------------------------------------------------------
+    logger.info("Step 7b: Computing bootstrap confidence intervals")
+    bootstrap_results = {}
+    for cond_name in results:
+        if cond_name == "real_data":
+            continue  # trivially 1.0
+        edges = list(edges_by_condition.get(cond_name, []))
+        if cond_name == "grnboost2_real" and edges_grnboost_real is not None:
+            edges = list(edges_grnboost_real)
+        elif cond_name == "dcdi_real" and edges_dcdi_real is not None:
+            edges = list(edges_dcdi_real)
+        if edges:
+            boot = bootstrap_evaluate(edges, gt_edges, gene_subset,
+                                      n_bootstrap=200, seed=args.seed)
+            bootstrap_results[cond_name] = boot
+            f1_ci = boot["f1"]
+            logger.info("  %s: F1=%.4f [%.4f, %.4f]",
+                        cond_name, f1_ci["mean"], f1_ci["ci_lo"], f1_ci["ci_hi"])
+
+    # ------------------------------------------------------------------
+    # Step 7c: Prediction accuracy (if real model outputs available)
+    # ------------------------------------------------------------------
+    prediction_accuracy = {}
+    if real_pert_matrices and real_pert_labels:
+        for model_name in real_models_loaded:
+            cond_key = f"{model_name}_real"
+            if cond_key in conditions_data:
+                cond = conditions_data[cond_key]
+                # Re-extract model matrices from the cb_input using dict-based grouping
+                cb = cond["cb"]
+                model_mats_flat = cb.expression_matrix[cb.n_control_cells:]
+                model_labels = cb.interventions[cb.n_control_cells:]
+                # Group rows by gene using a dict (safe even if labels are non-contiguous)
+                from collections import defaultdict
+                gene_rows = defaultdict(list)
+                for i, lab in enumerate(model_labels):
+                    gene_rows[lab].append(model_mats_flat[i])
+                model_mats = [np.array(rows) for rows in gene_rows.values()]
+                model_labs = []
+                for gene, rows in gene_rows.items():
+                    model_labs.extend([gene] * len(rows))
+
+                acc = compute_prediction_accuracy(
+                    model_mats, model_labs,
+                    real_pert_matrices, real_pert_labels,
+                    gene_subset
+                )
+                prediction_accuracy[model_name] = acc
+                logger.info("  %s prediction accuracy: MSE=%.4f, r=%.4f, cos=%.4f",
+                            model_name, acc["mse"], acc["pearson_r"], acc["cosine_sim"])
+
+    # ------------------------------------------------------------------
+    # Step 7d: Pairwise significance tests (key model comparisons)
+    # ------------------------------------------------------------------
+    pairwise_tests = {}
+    comparison_pairs = [
+        ("gears_real", "cpa_real"),
+        ("gears_real", "geneformer_real"),
+        ("elastic_net", "gears_real"),
+        ("gears_real", "grnboost2_real"),
+        ("cpa_real", "geneformer_real"),
+    ]
+    for cond_a, cond_b in comparison_pairs:
+        edges_a = list(edges_by_condition.get(cond_a, []))
+        edges_b_key = cond_b
+        if cond_b == "grnboost2_real" and edges_grnboost_real is not None:
+            edges_b_list = list(edges_grnboost_real)
+        else:
+            edges_b_list = list(edges_by_condition.get(cond_b, []))
+        if edges_a and edges_b_list:
+            test = pairwise_permutation_test(edges_a, edges_b_list, gt_edges,
+                                              gene_subset, n_perm=500, seed=args.seed)
+            key = f"{cond_a}_vs_{cond_b}"
+            pairwise_tests[key] = test
+            sig = "*" if test["significant_005"] else ""
+            logger.info("  %s vs %s: dF1=%.4f, p=%.4f %s",
+                        cond_a, cond_b, test["observed_diff"], test["p_value"], sig)
+
     # ------------------------------------------------------------------
     # Step 8: Save and print results
     # ------------------------------------------------------------------
     total_time = time.time() - t_start
     summary = {
-        "pipeline": "CausalCellBench Local Evaluation",
+        "pipeline": "CausalCellBench Local Evaluation v2",
         "n_genes": len(gene_subset),
         "gene_subset": gene_subset,
         "partition_size": args.partition_size,
@@ -1173,6 +1645,10 @@ def main(args):
         "nb_dispersion_median_r": float(np.median(r_disp)),
         "nb_dispersion_mean_mu": float(np.mean(mu_disp)),
         "conditions": results,
+        "inspre_results": inspre_results,
+        "bootstrap_ci": bootstrap_results,
+        "prediction_accuracy": prediction_accuracy,
+        "pairwise_significance": pairwise_tests,
         "total_wall_time": total_time,
     }
 
@@ -1189,9 +1665,9 @@ def main(args):
     print(f"  Genes: {len(gene_subset)} | Controls: {n_ctrl} (of {control.n_obs}) | "
           f"GT edges: {len(gt_edges)} | Random floor: {random_floor:.4f}")
     print()
-    header = f"  {'Condition':<18} {'Edges':>6} {'AUPRC':>7} {'P@100':>7} {'TP':>5} {'SHD':>6} {'Wass':>8} {'FOR':>7} {'Time':>7}"
+    header = f"  {'Condition':<18} {'Edges':>6} {'F1':>7} {'Prec':>7} {'Rec':>7} {'AUPRC':>7} {'P@100':>7} {'TP':>5} {'SHD':>6} {'Time':>7}"
     print(header)
-    print(f"  {'-'*18} {'-'*6} {'-'*7} {'-'*7} {'-'*5} {'-'*6} {'-'*8} {'-'*7} {'-'*7}")
+    print(f"  {'-'*18} {'-'*6} {'-'*7} {'-'*7} {'-'*7} {'-'*7} {'-'*7} {'-'*5} {'-'*6} {'-'*7}")
 
     display_order = [
         "real_data", "overlay_resampled_real", "elastic_net",
@@ -1201,9 +1677,9 @@ def main(args):
     ]
     display_names = {
         "real_data": "Real Data (UB)", "overlay_resampled_real": "Overlay Real",
-        "elastic_net": "ElasticNet",
-        "cpa_real": "CPA (real)", "gears_real": "GEARS (real)",
-        "scgpt_real": "scGPT (real)", "geneformer_real": "Geneformer (real)",
+        "elastic_net": "ElasticNet (reg)",
+        "cpa_real": "CPA", "gears_real": "GEARS",
+        "scgpt_real": "scGPT", "geneformer_real": "Geneformer",
         "cpa": "CPA (stub)", "gears": "GEARS (stub)",
         "scgpt": "scGPT (stub)", "geneformer": "Geneformer (stub)",
         "grnboost2_real": "GRNBoost2 (obs)", "dcdi_real": "DCDI-G (soft)",
@@ -1216,10 +1692,10 @@ def main(args):
         c = results[key]
         name = display_names.get(key, key)
         shd_v = c.get("shd", {}).get("shd", 0)
-        ws_v = c.get("wasserstein", {}).get("mean_wasserstein", 0.0)
-        for_v = c.get("false_omission", {}).get("for_rate", 0.0)
-        print(f"  {name:<18} {c['n_edges']:>6} {c['auprc']:>7.4f} {c.get('precision_at_100', 0):>7.4f} "
-              f"{c.get('n_true_positive', 0):>5} {shd_v:>6} {ws_v:>8.4f} {for_v:>7.4f} {c['wall_time']:>6.1f}s")
+        auprc_display = c.get('auprc_topk', c['auprc'])
+        print(f"  {name:<18} {c['n_edges']:>6} {c.get('f1', 0):>7.4f} {c.get('precision', 0):>7.4f} "
+              f"{c.get('recall', 0):>7.4f} {auprc_display:>7.4f} {c.get('precision_at_100', 0):>7.4f} "
+              f"{c.get('n_true_positive', 0):>5} {shd_v:>6} {c['wall_time']:>6.1f}s")
 
     print()
     print(f"  Random floor AUPRC: {random_floor:.4f}")
@@ -1243,12 +1719,14 @@ if __name__ == "__main__":
                         help="File with one gene per line (overrides --n-genes and --seed selection)")
     parser.add_argument("--model-outputs-dir", default=None,
                         help="Directory with {model}_predictions.h5ad files from real model runs")
-    parser.add_argument("--skip-stubs", action="store_true",
-                        help="Skip model stubs when --model-outputs-dir is provided")
+    parser.add_argument("--use-stubs", action="store_true",
+                        help="Run model stubs (DEPRECATED — only use when no real model outputs available)")
     parser.add_argument("--skip-random", action="store_true",
                         help="Skip random baseline GIES (saves ~2.5h for 200 genes)")
     parser.add_argument("--gies-cache-dir", default=None,
                         help="Cache GIES edges per condition (enables incremental re-runs)")
+    parser.add_argument("--run-inspre", action="store_true",
+                        help="Also run inspre causal discovery (handles cycles, scalable)")
     parser.add_argument("--run-dcdi", action="store_true",
                         help="Also run DCDI-G causal discovery (slower, handles soft interventions)")
     parser.add_argument("--dcdi-epochs", type=int, default=200, help="DCDI training epochs per partition")
