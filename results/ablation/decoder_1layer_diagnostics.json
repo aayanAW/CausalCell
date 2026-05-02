@@ -1,0 +1,11 @@
+{
+  "variant": "decoder_1layer",
+  "overrides": {
+    "n_layers_decoder": 1
+  },
+  "train_time_seconds": 1778.8577542304993,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 86.55445861816406,
+  "inter_pert_cosine_mean": 0.9991208974560302
+}

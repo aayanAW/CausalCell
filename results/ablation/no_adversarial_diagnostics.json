@@ -1,0 +1,12 @@
+{
+  "variant": "no_adversarial",
+  "overrides": {
+    "reg_adv": 0.0,
+    "pen_adv": 0.0
+  },
+  "train_time_seconds": 806.1745145320892,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 87.30697631835938,
+  "inter_pert_cosine_mean": 0.9992041260992462
+}

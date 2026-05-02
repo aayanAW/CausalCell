@@ -1,0 +1,11 @@
+{
+  "variant": "latent_16",
+  "overrides": {
+    "n_latent": 16
+  },
+  "train_time_seconds": 1793.147775888443,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 87.28678894042969,
+  "inter_pert_cosine_mean": 0.9981358943153267
+}

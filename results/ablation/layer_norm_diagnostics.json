@@ -1,0 +1,12 @@
+{
+  "variant": "layer_norm",
+  "overrides": {
+    "use_layer_norm_decoder": true,
+    "use_batch_norm_decoder": false
+  },
+  "train_time_seconds": 684.291784286499,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 83.64591217041016,
+  "inter_pert_cosine_mean": 0.9997180237123116
+}
