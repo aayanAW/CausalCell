@@ -108,12 +108,18 @@ Original "zero edges from CPA/Geneformer" was at *cross-validated* λ. Across th
 
 | Job | Type | Task ID | Started | Output destination |
 |---|---|---|---|---|
-| PC robustness (all conditions) | local CPU | `brldr7wvt` | 2026-05-01 23:02 | `results/phase7/pc_edges_by_condition.json` |
+| PC robustness (3rd attempt with jitter fix) | local CPU | `bq0bsh52y` | 2026-05-02 00:50 | `results/phase7/pc_edges_by_condition.json` |
 | ~~NOTEARS robustness~~ | ~~local CPU~~ | ~~`bwgwpu3p4`~~ | ~~2026-05-01 23:25~~ | ✅ done; see `results/phase7/notears_edges_by_condition.json` |
-| Norman 2019 download + GIES eval (detached re-launch) | Modal CPU | task `bewbydn6m`, app `ap-ZyDTGAvBMhVCh6IREDVOV7` | 2026-05-02 00:08 | `/data/results/norman2019_summary.json` (Modal volume) |
-| Scale sweep N=500 + N=1000 (detached re-launch) | Modal CPU | task `b2u2vsrj3`, app `ap-sNMPl7pR8wYNf4gXA6jSrI` | 2026-05-02 00:08 | `/data/results/scale_sweep/scale_sweep_n{500,1000}.json` |
+| ~~Norman 2019 download + GIES eval~~ | Modal CPU | several attempts | various | ❌ failed twice on Modal CLI ConnectionError after launching; see "Failed jobs" below |
+| ~~Scale sweep N=500 + N=1000~~ | Modal CPU | several attempts | various | ❌ partial: N=500 ACE matrices computed; inspre R subprocess didn't complete; see "Failed jobs" below |
 
-**Note:** the original Modal launches (`ap-Sx6LAnDMGVCSfKr0M8xTmd` Norman, `ap-FR1JNkLGmIDW7Mt3atemgJ` scale sweep) were killed by Modal's local-client-disconnect timeout before completing inspre. Both have been re-launched with `modal run --detach` so they continue running on Modal even after the local CLI exits.
+**Norman 2019 and scale sweep status (honest):** both were re-launched with `modal run --detach` after the first attempts were killed by local-CLI disconnect. The detached re-launches (`b2u2vsrj3` scale sweep, `bewbydn6m` Norman) returned `ConnectionError: nodename nor servname provided, or not known` from the local Modal CLI — a network/DNS issue, not the workload. The Modal apps were launched but their final outputs never synced to the volume. The volume contains:
+- `results/scale_sweep/real_ace_n500.npy` (success — ACE construction phase)
+- `results/scale_sweep/elastic_net_ace_n500.npy` (success — ACE construction phase)
+- No final JSON; inspre R subprocess phase did not complete.
+- No Norman 2019 artifacts at all.
+
+To resume both: `modal run --detach scripts/modal_scale_sweep.py` and `modal run --detach scripts/modal_norman2019.py`. Each takes 60–120 minutes after image build. Volume artifacts persist between attempts so the second pass at scale sweep should skip ACE construction. If Modal CLI still flakes, run from a different network or use `modal run --no-stream`.
 
 To check status:
 
