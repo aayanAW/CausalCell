@@ -1,0 +1,42 @@
+{
+  "real": {
+    "n_edges": 682
+  },
+  "ground_truth": "PC on real ACE",
+  "gears_vanilla": {
+    "n_edges": 556,
+    "f1": 0.05492730210016156,
+    "precision": 0.06115107913669065,
+    "recall": 0.04985337243401759
+  },
+  "gears_calibrated": {
+    "n_edges": 652,
+    "f1": 0.04797601199400299,
+    "precision": 0.049079754601226995,
+    "recall": 0.0469208211143695
+  },
+  "cpa_vanilla": {
+    "n_edges": 268,
+    "f1": 0.07999999999999999,
+    "precision": 0.1417910447761194,
+    "recall": 0.05571847507331378
+  },
+  "cpa_calibrated": {
+    "n_edges": 294,
+    "f1": 0.0778688524590164,
+    "precision": 0.1292517006802721,
+    "recall": 0.05571847507331378
+  },
+  "geneformer_vanilla": {
+    "n_edges": 142,
+    "f1": 0.00970873786407767,
+    "precision": 0.028169014084507043,
+    "recall": 0.005865102639296188
+  },
+  "geneformer_calibrated": {
+    "n_edges": 240,
+    "f1": 0.004338394793926247,
+    "precision": 0.008333333333333333,
+    "recall": 0.002932551319648094
+  }
+}
