@@ -27,7 +27,7 @@ GIES_CACHE = BASE / "gies_cache" / "n200_s42_p20" if (BASE / "gies_cache").exist
 OUTDIR = BASE / "results" / "phase7_clinical"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
-DGIDB_API = "https://dgidb.org/api/v2/interactions.json"
+DGIDB_GRAPHQL_URL = "https://dgidb.org/api/graphql"
 DEPMAP_URL = "https://ndownloader.figshare.com/files/34008404"  # DepMap 22Q2 CRISPRGeneEffect
 
 
@@ -157,8 +157,9 @@ def compute_selective_essentiality(centrality_df: pd.DataFrame) -> pd.DataFrame:
     merged = centrality_df.merge(depmap_filtered, on="gene", how="left")
 
     # Flag selectively essential genes
-    # selective_score < -0.2 means K562 is more dependent than average
-    merged["is_selectively_essential"] = merged["selective_score"] < -0.2
+    # Use DepMap standard threshold: Chronos < -0.5 for strongly essential
+    # Selective = K562 score < -0.5 AND at least 0.3 more negative than pan-cancer mean
+    merged["is_selectively_essential"] = (merged["selective_score"] < -0.3) & (merged["k562_chronos"] < -0.5)
     merged["is_essential"] = merged["k562_chronos"] < -0.5
 
     n_selective = merged["is_selectively_essential"].sum()
@@ -175,8 +176,11 @@ def compute_selective_essentiality(centrality_df: pd.DataFrame) -> pd.DataFrame:
 # =====================================================================
 
 def query_dgidb(genes: list) -> pd.DataFrame:
-    """Query DGIdb for drug-gene interactions, with caching."""
-    logger.info(f"\nStep 3: Querying DGIdb for {len(genes)} genes")
+    """Query DGIdb v5 GraphQL API for drug-gene interactions, with caching.
+
+    Uses the v5 GraphQL endpoint (REST v2 is deprecated and returns empty results).
+    """
+    logger.info(f"\nStep 3: Querying DGIdb v5 (GraphQL) for {len(genes)} genes")
 
     dgidb_cache = OUTDIR / "dgidb_interactions.json"
     if dgidb_cache.exists():
@@ -186,30 +190,61 @@ def query_dgidb(genes: list) -> pd.DataFrame:
     else:
         all_interactions = []
 
-        # Batch query (DGIdb supports up to 100 genes per request)
-        batch_size = 50
+        # GraphQL query template
+        query_template = """
+        query($names: [String!]!) {
+          genes(names: $names) {
+            nodes {
+              name
+              interactions {
+                drug { name approved }
+                interactionScore
+                interactionTypes { type directionality }
+                publications { pmid }
+                sources { fullName }
+              }
+            }
+          }
+        }
+        """
+
+        # Batch query (25 genes per request to stay within GraphQL limits)
+        batch_size = 25
         for i in range(0, len(genes), batch_size):
             batch = genes[i:i + batch_size]
             logger.info(f"  Querying batch {i // batch_size + 1} ({len(batch)} genes)...")
 
             try:
-                response = requests.get(
-                    DGIDB_API,
-                    params={"genes": ",".join(batch)},
+                response = requests.post(
+                    DGIDB_GRAPHQL_URL,
+                    json={"query": query_template, "variables": {"names": batch}},
                     timeout=30,
+                    headers={"Content-Type": "application/json"},
                 )
                 response.raise_for_status()
                 data = response.json()
 
-                for match in data.get("matchedTerms", []):
-                    gene = match.get("geneName", "")
-                    for interaction in match.get("interactions", []):
+                nodes = data.get("data", {}).get("genes", {}).get("nodes", [])
+                for node in nodes:
+                    gene_name = node.get("name", "")
+                    for interaction in node.get("interactions", []):
+                        drug_info = interaction.get("drug", {})
+                        drug_name = drug_info.get("name", "") if drug_info else ""
+                        approved = drug_info.get("approved", False) if drug_info else False
+                        int_types = interaction.get("interactionTypes", [])
+                        type_str = "; ".join(t.get("type", "") for t in int_types) if int_types else ""
+                        sources = interaction.get("sources", [])
+                        source_str = "; ".join(s.get("fullName", "") for s in sources) if sources else ""
+                        pubs = interaction.get("publications", [])
+                        pmids = [p.get("pmid", "") for p in pubs if p.get("pmid")] if pubs else []
+
                         all_interactions.append({
-                            "gene": gene,
-                            "drug": interaction.get("drugName", ""),
-                            "interaction_type": interaction.get("interactionTypes", ""),
-                            "source": interaction.get("source", ""),
-                            "pmids": interaction.get("pmids", []),
+                            "gene": gene_name,
+                            "drug": drug_name,
+                            "approved": approved,
+                            "interaction_type": type_str,
+                            "source": source_str,
+                            "pmids": pmids,
                         })
 
                 time.sleep(0.5)  # Rate limiting
@@ -222,7 +257,7 @@ def query_dgidb(genes: list) -> pd.DataFrame:
     logger.info(f"  Found {len(all_interactions)} drug-gene interactions")
 
     if not all_interactions:
-        return pd.DataFrame(columns=["gene", "drug", "interaction_type", "source"])
+        return pd.DataFrame(columns=["gene", "drug", "approved", "interaction_type", "source"])
 
     interactions_df = pd.DataFrame(all_interactions)
     # Deduplicate
@@ -230,7 +265,8 @@ def query_dgidb(genes: list) -> pd.DataFrame:
 
     n_genes_with_drugs = interactions_df["gene"].nunique()
     n_drugs = interactions_df["drug"].nunique()
-    logger.info(f"  {n_genes_with_drugs} genes have drug interactions ({n_drugs} unique drugs)")
+    n_approved = interactions_df[interactions_df.get("approved", False) == True]["drug"].nunique() if "approved" in interactions_df.columns else 0
+    logger.info(f"  {n_genes_with_drugs} genes have drug interactions ({n_drugs} unique drugs, {n_approved} FDA-approved)")
 
     interactions_df.to_csv(OUTDIR / "drug_interactions.csv", index=False)
     return interactions_df

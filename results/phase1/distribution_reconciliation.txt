@@ -1,0 +1,7 @@
+Per-pert Δ-variance: MODE COLLAPSE confirmed
+  models with median Δ-variance ratio < 1 (mode collapse): ['gears', 'cpa', 'geneformer']
+  models with median Δ-variance ratio > 5 (inflation):     []
+  models with elevated inter-pert cosine vs real:           ['cpa']
+DEG concentration: models predicting >3x real median DEGs/pert: []
+
+OUTCOME (A): mode collapse + inflation coexist. Models predict similar dense response pattern across perturbations, yielding low per-perturbation variance (mode collapse) and high fraction-of-large-effects when pooled (inflation). Both literature threads describe the same underlying failure from different angles.

@@ -1,0 +1,177 @@
+{
+  "r_available": true,
+  "real": {
+    "error": "no finite lambda values returned"
+  },
+  "gears_vanilla": {
+    "lambdas": [
+      5.77548598738518,
+      0.401507625285463
+    ],
+    "n_edges": [
+      1345,
+      6634
+    ]
+  },
+  "gears_calibrated": {
+    "lambdas": [
+      0.291951005097669,
+      0.229111462104526,
+      0.179797504208328,
+      0.141097884071794,
+      0.110727971320835,
+      0.086894879490816
+    ],
+    "n_edges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "cpa_vanilla": {
+    "error": "no finite lambda values returned"
+  },
+  "cpa_calibrated": {
+    "lambdas": [
+      0.253217726580701,
+      0.198715135603935,
+      0.155943683924931,
+      0.122378360773426,
+      0.0960376387722144,
+      0.0285841764610548,
+      0.0224317174720983,
+      0.00411169054371992
+    ],
+    "n_edges": [
+      0,
+      24,
+      0,
+      38,
+      51,
+      189,
+      273,
+      419
+    ]
+  },
+  "geneformer_vanilla": {
+    "lambdas": [
+      7.5495724996942,
+      5.92460229102622,
+      4.64939071824994,
+      3.64865572220618,
+      2.86331895638121,
+      2.2470180993165,
+      1.76336985699881,
+      1.38382207669705,
+      1.08596817188047,
+      0.85222435036755,
+      0.668791555927232,
+      0.524840841600762,
+      0.41187408329385,
+      0.323222293394217,
+      0.253651917380977,
+      0.199055871163487,
+      0.156211079552542,
+      0.122588202158223,
+      0.0962023138911259,
+      0.075495724996942
+    ],
+    "n_edges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      10,
+      12,
+      18,
+      37,
+      317,
+      396,
+      471,
+      544,
+      602
+    ]
+  },
+  "geneformer_calibrated": {
+    "lambdas": [
+      0.208390761220123,
+      0.163536727596622,
+      0.1283370775001,
+      0.100713801133972,
+      0.0790361595918787,
+      0.0620244142580161,
+      0.0486742774941875,
+      0.0381976245632174,
+      0.0299759667197267,
+      0.0235239387542291,
+      0.0184606454793184,
+      0.0144871755990188,
+      0.00700155090239967,
+      0.00549453687858141,
+      0.00431189259793056,
+      0.00338380070731067,
+      0.00208390761220123
+    ],
+    "n_edges": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      438,
+      868,
+      827,
+      1026,
+      1047,
+      1315
+    ]
+  },
+  "summary": {
+    "gears_vanilla": {
+      "max_edges_along_path": 6634,
+      "smallest_lambda_with_any_edge": 5.77548598738518,
+      "edges_at_smallest_lambda": 1345,
+      "any_edge_along_path": true
+    },
+    "gears_calibrated": {
+      "max_edges_along_path": 0,
+      "smallest_lambda_with_any_edge": null,
+      "edges_at_smallest_lambda": 0,
+      "any_edge_along_path": false
+    },
+    "cpa_calibrated": {
+      "max_edges_along_path": 419,
+      "smallest_lambda_with_any_edge": 0.198715135603935,
+      "edges_at_smallest_lambda": 24,
+      "any_edge_along_path": true
+    },
+    "geneformer_vanilla": {
+      "max_edges_along_path": 602,
+      "smallest_lambda_with_any_edge": 0.668791555927232,
+      "edges_at_smallest_lambda": 7,
+      "any_edge_along_path": true
+    },
+    "geneformer_calibrated": {
+      "max_edges_along_path": 1315,
+      "smallest_lambda_with_any_edge": 0.0144871755990188,
+      "edges_at_smallest_lambda": 438,
+      "any_edge_along_path": true
+    }
+  }
+}

@@ -26,7 +26,6 @@ env/
 .venv*/
 
 # Internal/private
-.claude/
 circuitdrug/
 submissions/
 HANDOFF_*
