@@ -1,0 +1,11 @@
+{
+  "variant": "loss_gauss",
+  "overrides": {
+    "recon_loss": "gauss"
+  },
+  "train_time_seconds": 1300.61749792099,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 82.06129455566406,
+  "inter_pert_cosine_mean": 0.9996360709798995
+}

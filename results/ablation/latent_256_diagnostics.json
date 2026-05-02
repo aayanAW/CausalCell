@@ -1,0 +1,11 @@
+{
+  "variant": "latent_256",
+  "overrides": {
+    "n_latent": 256
+  },
+  "train_time_seconds": 1774.8800132274628,
+  "n_predictions": 200,
+  "n_failed": 0,
+  "delta_var_ratio_median": 85.99940490722656,
+  "inter_pert_cosine_mean": 0.9973838921168342
+}
