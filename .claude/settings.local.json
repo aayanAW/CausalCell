@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python3 -c \"import torch; print\\(''''torch'''', torch.__version__\\)\")",
+      "Bash(python3 -c \"import numpy; print\\(''''numpy'''', numpy.__version__\\)\")",
+      "Bash(python3 -c \"import scipy; print\\(''''scipy'''', scipy.__version__\\)\")",
+      "Bash(python3 -m pip --version)",
+      "Bash(python3 -c \"import sklearn; print\\(''''sklearn'''', sklearn.__version__\\)\")",
+      "Bash(python3 -c \"import pandas; print\\(''''pandas'''', pandas.__version__\\)\")",
+      "Bash(python3 -c \"import matplotlib; print\\(''''matplotlib'''', matplotlib.__version__\\)\")",
+      "Bash(python3 -c \"import anndata; print\\(''''anndata'''', anndata.__version__\\)\")",
+      "Bash(python3 -c \"import scanpy; print\\(''''scanpy'''', scanpy.__version__\\)\")",
+      "Bash(python3 scripts/preliminary_experiment.py)",
+      "Bash(python -m pytest tests/ -x --tb=short)",
+      "Bash(python3 -m pytest tests/ -x --tb=short)",
+      "Bash(python3 -c \"import sys; print\\(sys.executable\\); print\\(sys.version\\)\")",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(python3 -c \"import torch, numpy, scipy; print\\(''torch'', torch.__version__\\); print\\(''numpy'', numpy.__version__\\); print\\(''scipy'', scipy.__version__\\)\")",
+      "Bash(python3 -c \"import json, sys; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(json.dumps\\(d, indent=2\\)[:500]\\)\")",
+      "Bash(python3 -c \"import json, sys; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(d[''''message''''][''''content''''][0][''''text'''']\\)\")",
+      "WebFetch(domain:www.nature.com)",
+      "WebFetch(domain:arxiv.org)"
+    ]
+  }
+}
