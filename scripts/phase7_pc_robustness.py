@@ -86,6 +86,14 @@ def pc_edges(data: np.ndarray, gene_names: list[str], alpha: float = 0.05) -> se
     """Run PC and extract directed/undirected edges as (source, target) tuples."""
     # Replace NaN/inf with 0 (no shift) so PC's CIT doesn't reject input
     data = np.nan_to_num(np.asarray(data, dtype=np.float64), nan=0.0, posinf=0.0, neginf=0.0)
+    # Add tiny per-column jitter so std is never exactly zero (prevents
+    # FisherZ from producing NaN correlations on constant columns).
+    rng = np.random.default_rng(0)
+    col_std = data.std(axis=0)
+    zero_cols = col_std < 1e-12
+    if zero_cols.any():
+        jitter = rng.normal(0.0, 1e-8, size=data.shape).astype(np.float64)
+        data = data + jitter * zero_cols.astype(np.float64)[None, :]
     cg = pc(data, alpha=alpha, indep_test="fisherz", verbose=False, show_progress=False)
     g = cg.G
     nodes = g.get_nodes()
@@ -142,31 +150,47 @@ conditions = {
 deep_models = ["gears", "cpa", "geneformer"]
 
 results = {"real": {"n_edges": len(real_edges)}, "ground_truth": "PC on real ACE"}
+OUT_JSON = OUT / "pc_edges_by_condition.json"
+
+def _flush():
+    with open(OUT_JSON, "w") as f:
+        json.dump(results, f, indent=2)
+
+_flush()  # write real-data result immediately
 
 for m in deep_models:
     p_van = PRED_DIR / f"{m}_predictions.h5ad"
     p_cal = PRED_DIR_CAL / f"{m}_predictions.h5ad"
     if p_van.exists():
-        means_van = load_pred_means(p_van, gene_names)
-        ace_van = build_ace_dataset(means_van, ctrl_mean, gene_names)
-        t0 = time.time()
-        edges_van = pc_edges(ace_van, gene_names, alpha=0.05)
-        f1, p, r = compute_f1(edges_van, real_edges)
-        print(f"  {m} (vanilla):   PC edges={len(edges_van)}, "
-              f"F1={f1:.4f}, P={p:.4f}, R={r:.4f} ({time.time()-t0:.1f}s)")
-        results[f"{m}_vanilla"] = {"n_edges": len(edges_van), "f1": f1,
-                                    "precision": p, "recall": r}
+        try:
+            means_van = load_pred_means(p_van, gene_names)
+            ace_van = build_ace_dataset(means_van, ctrl_mean, gene_names)
+            t0 = time.time()
+            edges_van = pc_edges(ace_van, gene_names, alpha=0.05)
+            f1, p, r = compute_f1(edges_van, real_edges)
+            print(f"  {m} (vanilla):   PC edges={len(edges_van)}, "
+                  f"F1={f1:.4f}, P={p:.4f}, R={r:.4f} ({time.time()-t0:.1f}s)",
+                  flush=True)
+            results[f"{m}_vanilla"] = {"n_edges": len(edges_van), "f1": f1,
+                                        "precision": p, "recall": r}
+        except Exception as exc:
+            print(f"  {m} (vanilla) FAILED: {exc}", flush=True)
+            results[f"{m}_vanilla"] = {"error": str(exc)}
+        _flush()
     if p_cal.exists():
-        means_cal = load_pred_means(p_cal, gene_names)
-        ace_cal = build_ace_dataset(means_cal, ctrl_mean, gene_names)
-        t0 = time.time()
-        edges_cal = pc_edges(ace_cal, gene_names, alpha=0.05)
-        f1, p, r = compute_f1(edges_cal, real_edges)
-        print(f"  {m} (calibrated): PC edges={len(edges_cal)}, "
-              f"F1={f1:.4f}, P={p:.4f}, R={r:.4f} ({time.time()-t0:.1f}s)")
-        results[f"{m}_calibrated"] = {"n_edges": len(edges_cal), "f1": f1,
-                                       "precision": p, "recall": r}
-
-with open(OUT / "pc_edges_by_condition.json", "w") as f:
-    json.dump(results, f, indent=2)
+        try:
+            means_cal = load_pred_means(p_cal, gene_names)
+            ace_cal = build_ace_dataset(means_cal, ctrl_mean, gene_names)
+            t0 = time.time()
+            edges_cal = pc_edges(ace_cal, gene_names, alpha=0.05)
+            f1, p, r = compute_f1(edges_cal, real_edges)
+            print(f"  {m} (calibrated): PC edges={len(edges_cal)}, "
+                  f"F1={f1:.4f}, P={p:.4f}, R={r:.4f} ({time.time()-t0:.1f}s)",
+                  flush=True)
+            results[f"{m}_calibrated"] = {"n_edges": len(edges_cal), "f1": f1,
+                                           "precision": p, "recall": r}
+        except Exception as exc:
+            print(f"  {m} (calibrated) FAILED: {exc}", flush=True)
+            results[f"{m}_calibrated"] = {"error": str(exc)}
+        _flush()
 print(f"\nWrote {OUT/'pc_edges_by_condition.json'}")
