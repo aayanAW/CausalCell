@@ -1,0 +1,14 @@
+{
+  "dataset": "Norman 2019",
+  "n_genes": 102,
+  "partition_size": 20,
+  "seed": 42,
+  "real_n_edges": 215,
+  "elastic_net": {
+    "n_edges": 313,
+    "tp": 69,
+    "f1": 0.26136363636363635,
+    "precision": 0.22044728434504793,
+    "recall": 0.3209302325581395
+  }
+}
