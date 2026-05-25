@@ -276,15 +276,51 @@ def main():
         with open(cache_gt, "w") as f:
             json.dump({"edges": [list(e) for e in gt_edges], "time": t_gt}, f)
 
-    logger.info("\nStep 3b: Running GIES on ElasticNet (real means)")
+    logger.info("\nStep 3b: Fitting ElasticNet on RPE1 ctrl + GIES")
+    # AUDIT FIX 2026-05-25: prior version passed real `pert_means` to both real
+    # and ENet conditions, producing precision=1.0 by construction. Now actually
+    # fits an ElasticNet per target gene on control cells and propagates predicted
+    # perturbation means via the same chain used in the K562 pipeline.
     cache_enet = OUTDIR / "elastic_net_edges.json"
+    # Force invalidation of stale cache from the buggy prior run.
+    bug_marker = OUTDIR / "elastic_net_edges.json.bug_v0"
+    if cache_enet.exists() and not bug_marker.exists():
+        # Move the buggy cache aside so a future audit can compare.
+        cache_enet.rename(bug_marker)
+        logger.warning(f"  Moved buggy ENet cache aside: {bug_marker}")
     if cache_enet.exists():
         with open(cache_enet) as f:
             enet_edges = set(tuple(e) for e in json.load(f)["edges"])
         logger.info(f"  ElasticNet: CACHED ({len(enet_edges)} edges)")
     else:
+        from sklearn.linear_model import ElasticNet
+        logger.info("  Fitting per-target-gene ElasticNet on RPE1 ctrl cells")
+        n_g_local = len(gene_subset)
+        enet_models = {}
+        for g_idx in range(n_g_local):
+            feature_idx = [i for i in range(n_g_local) if i != g_idx]
+            m = ElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=1000, random_state=0)
+            m.fit(ctrl_X[:, feature_idx], ctrl_X[:, g_idx])
+            enet_models[g_idx] = m
+        # Predict per-perturbation means via ENet propagation
+        enet_pert_means = {}
+        ctrl_means_local = ctrl_X.mean(axis=0)
+        for g_idx, gene in enumerate(gene_subset):
+            input_state = ctrl_means_local.copy()
+            input_state[g_idx] *= 0.1  # 90% CRISPRi knockdown
+            mean_pred = input_state.copy()
+            for t_idx, model in enet_models.items():
+                if t_idx == g_idx:
+                    continue
+                feature_idx = [i for i in range(n_g_local) if i != t_idx]
+                mean_pred[t_idx] = max(
+                    float(model.predict(input_state[feature_idx].reshape(1, -1))[0]), 0.0
+                )
+            enet_pert_means[gene] = mean_pred
+        logger.info(f"  ENet predictions computed for {len(enet_pert_means)} perturbations")
+        # Now overlay-sample ENet predictions through the standard pipeline
         expr_enet, interv_enet = build_overlay_data(
-            ctrl_X, ctrl_mean, pert_means, gene_subset, N_CTRL, N_CELLS_PER_PERT, SEED)
+            ctrl_X, ctrl_mean, enet_pert_means, gene_subset, N_CTRL, N_CELLS_PER_PERT, SEED)
         t0 = time.time()
         enet_edges = run_gies(expr_enet, interv_enet, gene_subset, PARTITION_SIZE, SEED)
         t_enet = time.time() - t0

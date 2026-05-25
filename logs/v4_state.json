@@ -1,0 +1,10 @@
+{
+  "started_at": "2026-05-25T21:34:08Z",
+  "current_phase": "phase1_multiseed_n20",
+  "completed_phases": [],
+  "failed_phases": [
+    "phase0_rpe1_rerun"
+  ],
+  "status": "in_progress",
+  "last_update": "2026-05-25T21:34:12Z"
+}

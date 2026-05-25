@@ -101,10 +101,10 @@ Virtual cell models are deep neural networks that predict transcriptional respon
 \citet{ahlmanneltze2025} recently showed that current models fail to outperform simple linear baselines at per-gene prediction; we ask whether the same holds downstream when their predictions are used to recover causal gene regulatory networks.
 We introduce \textbf{PerturbCausal}, a benchmark that pushes predictions from four virtual cell models (GEARS, CPA, Geneformer, and the 2025 Arc Institute STATE foundation model) through four causal discovery algorithms (GIES, inspre, PC, NOTEARS) on the Replogle K562 and RPE1 Perturb-seq datasets and the Norman 2019 K562 dataset.
 Across five seeds, the three pre-2025 models do not significantly outperform a sparse linear regression trained on control cells alone.
-STATE is the first model in the roster to materially exceed the linear baseline ($F_1 = 0.462$), but its absolute causal F1 remains below $0.5$, leaving more than half of real interventional edges unrecovered.
+STATE is the first model in the roster to materially exceed the linear baseline ($F_1 = 0.462$, single seed, 320-cell embedding subset; multi-seed reported in \S\ref{sec:state-multi-seed}), but its absolute causal F1 remains below $0.5$, leaving more than half of real interventional edges unrecovered.
 We reconcile two competing narratives in the recent literature, mode collapse \citep{mejia2025diversity} and effect-size inflation, as two views of the same failure: deep models predict similar dense response patterns across perturbations.
 A model-agnostic quantile-matching calibration corrects this magnitude failure exactly but recovers only about $40\%$ of the causal gap, locating the remainder in joint-distribution structure that distributional calibration cannot reach.
-The benchmark, calibration toolkit, and reproducibility code are released as an open-source Python package.
+The benchmark, post-hoc quantile-matching calibration module, and reproducibility code are released as an open-source Python package.
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -122,7 +122,7 @@ We close this gap. The contributions of this paper are:
 \item \textbf{A causal-recovery benchmark for VCMs.} Predictions from three architecturally distinct VCMs are passed through identical GIES~\citep{hauser2012gies} and inspre~\citep{brown2025inspre} pipelines on Replogle K562 and RPE1 Perturb-seq~\citep{replogle2022}, and resulting graphs are compared against real-data ground truth.
 \item \textbf{A diagnosis of the failure mode.} All three deep models inflate predicted effect-size distributions by a factor of approximately 23 relative to real biology. The inflation magnitudes are identical to within 0.3 percentage points across radically different architectures (GNN, VAE, transformer), arguing the failure is objective-driven (per-gene MSE) rather than architecture-driven.
 \item \textbf{An empirical signal probe.} The inspre algorithm exposes that CPA and Geneformer's average causal effect (ACE) matrices fall below the regularization-path detection threshold, recovering zero edges where real data and ElasticNet recover approximately 12{,}000.
-\item \textbf{A model-agnostic post-hoc calibration toolkit.} Quantile matching~\citep{bolstad2003,reinhard2001} corrects the magnitude distribution exactly and partially recovers causal F1, with results that distinguish ``inflated-but-rank-correct'' deep models from ``calibration-already-implicit'' ones.
+\item \textbf{A diagnostic decomposition of the substitutability gap.} Post-hoc quantile-matching calibration~\citep{bolstad2003,reinhard2001} corrects the magnitude marginal exactly and recovers a small share of the causal-F1 gap, demonstrating that the residual gap lives in joint-distribution structure (gene-gene covariance, edge orientation) that distributional calibration cannot reach. The decomposition is the contribution; the calibration itself is a standard technique.
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -131,7 +131,9 @@ We close this gap. The contributions of this paper are:
 
 \paragraph{Causal discovery on Perturb-seq.} GIES~\citep{hauser2012gies} is the canonical interventional causal discovery algorithm and the primary backend in CausalBench~\citep{chevalley2025causalbench}. inspre~\citep{brown2025inspre} operates on the average causal effect matrix and scales to thousands of nodes. Both are used here as parallel backends.
 
-\paragraph{Perturbation prediction benchmarks.} PerturBench~\citep{wu2024perturbench}, the Virtual Cell Challenge~\citep{roohani2025vcc}, \citet{ahlmanneltze2025}, and \citet{mejia2025diversity} evaluate VCMs on per-gene reconstruction across various calibrated and uncalibrated metrics. None evaluates downstream causal recovery.
+\paragraph{Perturbation prediction benchmarks.} A growing 2024--2025 literature converges on a single conclusion: deep learning does not yet beat simple baselines on per-gene reconstruction~\citep{ahlmanneltze2025,wong2025simple,csendes2025benchmark,wei2025benchmark,vinas2025systema,bendidi2024pca,wenteler2025perteval,zhu2025garm,li2025systematic,mejia2025diversity}. PerturBench~\citep{wu2024perturbench} and the Virtual Cell Challenge~\citep{roohani2025vcc} provide the field's standard evaluation harnesses; \citet{vinas2025systema} introduce ``systematic variation'' as a confounder of $\Delta$-based metrics and \citet{wei2025benchmark} extend the comparison to 27 methods on 29 datasets. None of these evaluate downstream causal recovery from VCM predictions.
+
+\paragraph{Causal discovery from {Perturb-seq}.} A parallel literature builds causal-discovery methods directly on real Perturb-seq data: GIES~\citep{hauser2012gies}, inspre~\citep{brown2025inspre}, BEELINE~\citep{pratapa2019beeline} as a benchmark of GRN inference algorithms, Scribe~\citep{qiu2020scribe}, CASCADE~\citep{cao2025cascade} for causality-oriented reprogramming design, and confounder-robust IV-based methods~\citep{park2026confounder}. \citet{kernfeld2024fdr} argue transcriptome data alone cannot control false discoveries in causal network inference. {PerturbCausal} is downstream of all of these: it asks whether \emph{predicted} perturbation data can substitute for the \emph{real} data those methods consume.
 
 \paragraph{Causal evaluation of VCMs.} \citet{vc_causal_2025} proposed a causal-evaluation taxonomy without implementation. \citet{wu2025cdn} used causal discovery as a \emph{featurizer} for perturbation target prediction---orthogonal direction to ours.
 
@@ -201,10 +203,10 @@ Python 3.10 with \texttt{anndata}~0.10, \texttt{scanpy}~1.10, \texttt{gies}~0.1,
 \label{sec:results}
 
 \subsection{Causal recovery on K562 at $N{=}200$}
-We evaluate all conditions across five random seeds (42, 123, 456, 789, 1024), each re-randomizing gene subset selection, control cell subsampling, and GIES partition order. Per-seed pipelines run independently and metrics are aggregated with $t$-distribution 95\% CIs and paired permutation tests (500 permutations) on F1 differences. Against 1{,}080--1{,}249 ground-truth edges per seed, all four predictive methods fall within a tight band: ElasticNet F1 $= 0.426$ $[0.406, 0.446]$, CPA $= 0.412$ $[0.392, 0.432]$, GEARS $= 0.406$ $[0.388, 0.424]$, Geneformer $= 0.425$ $[0.412, 0.439]$, overlay-resampled real $= 0.422$ $[0.412, 0.433]$ (Table~\ref{tab:main}; Figure~\ref{fig:main}). \textbf{No pairwise difference among predictive methods is significant at $p<0.05$ across seeds}; ElasticNet (0.426) and Geneformer (0.425) are statistically tied. The observational baseline GRNBoost2 is significantly worse ($0.098$ $[0.094, 0.103]$, $p<0.01$ vs.\ all interventional methods), and the random-bootstrap floor is F1 $\approx 0.04$. The technical-duplicate noise floor from cell-split sampling (Section~\ref{sec:noisefloor}) is $0.045 \pm 0.003$. The headline finding is therefore not that ElasticNet outperforms deep models---the previous single-seed claim does not survive multi-seed evaluation---but that a 104M-parameter pretrained transformer, a graph neural network with Gene Ontology priors, and a conditional VAE with adversarial covariate disentanglement all achieve causal-recovery F1 statistically indistinguishable from a sparse linear regression with $\approx\!200^2$ free coefficients.
+We evaluate all conditions across five random seeds (42, 123, 456, 789, 1024), each re-randomizing gene subset selection, control cell subsampling, and GIES partition order. Per-seed pipelines run independently and metrics are aggregated with $t$-distribution 95\% CIs and paired permutation tests (500 permutations) on F1 differences. Against 1{,}080--1{,}249 ground-truth edges per seed, all four predictive methods fall within a tight band: ElasticNet F1 $= 0.426$ $[0.406, 0.446]$, CPA $= 0.412$ $[0.392, 0.432]$, GEARS $= 0.406$ $[0.388, 0.424]$, Geneformer $= 0.425$ $[0.412, 0.439]$, overlay-resampled real $= 0.422$ $[0.412, 0.433]$ (Table~\ref{tab:main}; Figure~\ref{fig:main}). \textbf{No pairwise difference among predictive methods is significant at $p<0.05$ across seeds}; ElasticNet (0.426) and Geneformer (0.425) are statistically tied. The observational baseline GRNBoost2 falls to F1 $0.098$ $[0.094, 0.103]$, with 95\% CIs disjoint from every predictive method by $\geq 0.27$ F1; with $n=5$ paired sign-flip permutation, the floor two-sided $p$-value is $2/2^5 = 0.0625$, so $p<0.05$ is not certifiable at this seed budget despite the gap being far larger than the per-method standard error. The random-bootstrap floor is F1 $\approx 0.04$. The technical-duplicate noise floor from cell-split sampling (Section~\ref{sec:noisefloor}) is $0.045 \pm 0.003$. The headline finding is therefore not that ElasticNet outperforms deep models---the previous single-seed claim does not survive multi-seed evaluation---but that a 104M-parameter pretrained transformer, a graph neural network with Gene Ontology priors, and a conditional VAE with adversarial covariate disentanglement all achieve causal-recovery F1 statistically indistinguishable from a sparse linear regression with $\approx\!200^2$ free coefficients.
 
 \begin{table*}[t]
-\caption{Causal recovery on K562 at $N{=}200$ genes against real-data GIES ground truth. Multi-seed mean F1, precision, recall, and edge count across $n=5$ random seeds (42, 123, 456, 789, 1024) with 95\% $t$-distribution CIs. ``Tech.\ duplicate'' is F1 between two GIES recoveries on disjoint random halves of real cells (mean of 3 splits). Pairwise paired permutation tests on F1 differences (500 permutations) find \textbf{no significant difference} among the four predictive methods (ElasticNet, CPA, GEARS, Geneformer); GRNBoost2 is significantly worse than all four ($p<0.01$). ElasticNet (0.426) and Geneformer (0.425) are statistically tied.}
+\caption{Causal recovery on K562 at $N{=}200$ genes against real-data GIES ground truth. Multi-seed mean F1, precision, recall, and edge count across $n=5$ random seeds (42, 123, 456, 789, 1024) with 95\% $t$-distribution CIs. ``Tech.\ duplicate'' is F1 between two GIES recoveries on disjoint random halves of real cells (mean of 3 splits). Pairwise paired-sign-flip permutation tests on F1 differences find \textbf{no significant difference at $p<0.05$} among the four predictive methods (ElasticNet, CPA, GEARS, Geneformer). GRNBoost2 sits at F1 0.098 with 95\% CI disjoint from every predictive method by $\geq 0.27$ F1 (well over 10 standard errors); however, the $n=5$ paired-sign-flip permutation distribution has a minimum two-sided $p$-value of $2/2^5 = 0.0625$, so $p<0.05$ is not certifiable at this seed budget despite the obvious effect-size gap. ElasticNet (0.426) and Geneformer (0.425) are statistically tied.}
 \label{tab:main}
 \vskip 0.1in
 \centering
@@ -464,6 +466,76 @@ Zheng, X., Aragam, B., Ravikumar, P., and Xing, E.~P.
 {Arc Institute}.
 \newblock {STATE}: Multi-scale {AI} model for cellular perturbation effects.
 \newblock GitHub: \url{https://github.com/ArcInstitute/state}; HuggingFace: \url{https://huggingface.co/arcinstitute/SE-600M}, 2025.
+
+\bibitem[Adduri et al.(2025)]{adduri2025state}
+Adduri, A. et~al.
+\newblock Predicting cellular responses to perturbation across diverse contexts with {STATE}.
+\newblock \emph{bioRxiv}, 2025.
+
+\bibitem[Wong et al.(2025)]{wong2025simple}
+Wong, D.~R. et~al.
+\newblock Simple controls exceed best deep learning algorithms and reveal foundation model effectiveness for predicting genetic perturbations.
+\newblock \emph{Bioinformatics}, 2025.
+
+\bibitem[Csendes et al.(2025)]{csendes2025benchmark}
+Csendes, G. et~al.
+\newblock Benchmarking foundation cell models for post-perturbation {RNA}-seq prediction.
+\newblock \emph{BMC Genomics}, 2025.
+
+\bibitem[Wei et al.(2025)]{wei2025benchmark}
+Wei, Z. et~al.
+\newblock Benchmarking algorithms for generalizable single-cell perturbation response prediction.
+\newblock \emph{Nature Methods}, 2025.
+
+\bibitem[Vi{\~n}as Torn{\'e} et al.(2025)]{vinas2025systema}
+Vi{\~n}as Torn{\'e}, R. et~al.
+\newblock {Systema}: a framework for evaluating genetic perturbation response prediction beyond systematic variation.
+\newblock \emph{Nature Biotechnology}, 2025.
+
+\bibitem[Bendidi et al.(2024)]{bendidi2024pca}
+Bendidi, I. et~al.
+\newblock Benchmarking transcriptomics foundation models for perturbation analysis: one {PCA} still rules them all.
+\newblock \emph{arXiv}, 2024.
+
+\bibitem[Wenteler et al.(2025)]{wenteler2025perteval}
+Wenteler, A. et~al.
+\newblock {PertEval-scFM}: Benchmarking single-cell foundation models for perturbation effect prediction.
+\newblock \emph{bioRxiv}, 2025.
+
+\bibitem[Zhu et al.(2025)]{zhu2025garm}
+Zhu, D. et~al.
+\newblock Gradient-aware modeling advances {AI}-driven prediction of genetic perturbation effects.
+\newblock \emph{bioRxiv}, 2025.
+
+\bibitem[Li et al.(2025)]{li2025systematic}
+Li, L. et~al.
+\newblock A systematic comparison of single-cell perturbation response prediction models.
+\newblock \emph{bioRxiv}, 2025.
+
+\bibitem[Cao et al.(2025)]{cao2025cascade}
+Cao, Z.-J. et~al.
+\newblock Causality-oriented regulatory inference and rational transcriptomic reprogramming design with {CASCADE}.
+\newblock \emph{bioRxiv}, 2025.
+
+\bibitem[Park et al.(2026)]{park2026confounder}
+Park, K. et~al.
+\newblock Confounder-robust causal discovery and inference in {Perturb-seq} using proxy and instrumental variables.
+\newblock 2026.
+
+\bibitem[Pratapa et al.(2019)]{pratapa2019beeline}
+Pratapa, A. et~al.
+\newblock Benchmarking algorithms for gene regulatory network inference from single-cell transcriptomic data ({BEELINE}).
+\newblock \emph{Nature Methods}, 2019.
+
+\bibitem[Kernfeld et al.(2024)]{kernfeld2024fdr}
+Kernfeld, E. et~al.
+\newblock Transcriptome data are insufficient to control false discoveries in regulatory network inference.
+\newblock \emph{Cell Systems}, 2024.
+
+\bibitem[Qiu et al.(2020)]{qiu2020scribe}
+Qiu, X. et~al.
+\newblock Inferring causal gene regulatory networks from coupled single-cell expression dynamics using {Scribe}.
+\newblock \emph{Cell Systems}, 2020.
 
 \bibitem[Spirtes \& Glymour(2000)]{spirtes2000}
 Spirtes, P. and Glymour, C.
