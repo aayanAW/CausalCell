@@ -192,3 +192,6 @@ print('  orderings:', all_orderings())
 # Run sweep (placeholder: actual sweep depends on Phase 1 + Phase 2 deliverables)
 mkdir -p "$ROOT/results/calibration_modes" "$ROOT/data/model_outputs_phase4"
 python3 "$ROOT/scripts/v4/phase_4_calibration_sweep.py" 2>&1 | tail -80
+echo ""
+echo "  Running GIES on each calibrated condition (slow, ~5 min each × 27 = ~2.25h)"
+python3 "$ROOT/scripts/v4/phase_4_calibration_gies.py" 2>&1 | tail -60
