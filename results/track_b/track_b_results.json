@@ -1,0 +1,497 @@
+{
+  "track": "B",
+  "description": "Evaluation of GIES causal graph predictions against TRRUST v2 literature-curated TF-target interactions (biological ground truth).",
+  "gene_subset": [
+    "ACIN1",
+    "AKIRIN2",
+    "ALDOA",
+    "ALG11",
+    "ANAPC11",
+    "ANAPC5",
+    "ARL4D",
+    "ARPC4",
+    "ASF1B",
+    "ATF4",
+    "ATP1A1",
+    "ATR",
+    "AURKAIP1",
+    "BARD1",
+    "BRF2",
+    "BUD13",
+    "CCT8",
+    "CDC26",
+    "CDK9",
+    "CHMP6",
+    "CNIH4",
+    "CNOT2",
+    "COG1",
+    "COG6",
+    "COPS5",
+    "COQ5",
+    "COX10",
+    "CTNNBL1",
+    "CUL2",
+    "DAP3",
+    "DCTN6",
+    "DDB1",
+    "DDX18",
+    "DDX23",
+    "DHX9",
+    "DNAJA3",
+    "DOHH",
+    "DR1",
+    "DYNC1I2",
+    "EIF1AD",
+    "EIF2B2",
+    "EIF3I",
+    "EIF4E",
+    "ELOVL1",
+    "ELP3",
+    "ELP6",
+    "EMC4",
+    "EPRS",
+    "ETF1",
+    "EXOC8",
+    "EXOSC5",
+    "EXOSC7",
+    "FAF2",
+    "FAM207A",
+    "FARS2",
+    "FAU",
+    "GLE1",
+    "GNB1L",
+    "GTF2E2",
+    "GTF2H3",
+    "GTF3C3",
+    "GTF3C6",
+    "H2AFZ",
+    "HAUS8",
+    "HIST1H2BJ",
+    "HMGA1",
+    "HMGCS1",
+    "HNRNPR",
+    "HSD17B10",
+    "HSP90B1",
+    "HSPD1",
+    "ICE1",
+    "IGBP1",
+    "KANSL1",
+    "KAT5",
+    "KCMF1",
+    "KIF18B",
+    "KRI1",
+    "MARS2",
+    "MAX",
+    "MCL1",
+    "MCM4",
+    "MDN1",
+    "MED22",
+    "MED27",
+    "MED29",
+    "MEPCE",
+    "METTL23",
+    "MRPL28",
+    "MRPL34",
+    "MRPL39",
+    "MRPL4",
+    "MRPS10",
+    "MRPS27",
+    "MTG2",
+    "NASP",
+    "NDC1",
+    "NDUFAB1",
+    "NEDD8",
+    "NEMF",
+    "NFYC",
+    "NOL11",
+    "NOM1",
+    "NOP16",
+    "NOP2",
+    "NSF",
+    "NSUN4",
+    "NUP160",
+    "NUTF2",
+    "OPA1",
+    "ORC4",
+    "PDRG1",
+    "PET117",
+    "POLA2",
+    "POLD3",
+    "POLR2D",
+    "POLR2I",
+    "POLR2K",
+    "POLR3C",
+    "PPA2",
+    "PPP1R2",
+    "PRPF4",
+    "PRPF4B",
+    "PSMA4",
+    "PSMA6",
+    "PSMD12",
+    "PSMD2",
+    "PSMG4",
+    "PTBP1",
+    "RAB4A",
+    "RANBP2",
+    "RARS2",
+    "RBBP5",
+    "RBM14",
+    "RBM4",
+    "RBM48",
+    "RCL1",
+    "REXO2",
+    "RFC4",
+    "RFT1",
+    "RGP1",
+    "RIOK1",
+    "RNF4",
+    "RPF2",
+    "RPL17",
+    "RPL26L1",
+    "RPS11",
+    "RPS19BP1",
+    "RPS20",
+    "RPS21",
+    "RPS24",
+    "RPTOR",
+    "RPUSD4",
+    "RTEL1",
+    "SAP18",
+    "SDHAF2",
+    "SDHC",
+    "SENP6",
+    "SF3B1",
+    "SKA1",
+    "SLC39A7",
+    "SLU7",
+    "SMARCE1",
+    "SMC4",
+    "SMG6",
+    "SNIP1",
+    "SNRNP48",
+    "SON",
+    "SPTLC1",
+    "SRFBP1",
+    "SRSF2",
+    "SS18L2",
+    "STAT5A",
+    "SURF6",
+    "TACC3",
+    "TAF1",
+    "TAF1D",
+    "TBCC",
+    "TCP1",
+    "TICRR",
+    "TOPBP1",
+    "TOR2A",
+    "TP53RK",
+    "TPX2",
+    "TSEN54",
+    "TUBA1B",
+    "UBE2I",
+    "UBE2N",
+    "UBE2Z",
+    "UQCRC2",
+    "USP10",
+    "VPS33A",
+    "WBP1L",
+    "WDR12",
+    "WDR18",
+    "WDR92",
+    "WDTC1",
+    "ZC3H8",
+    "ZNRD1",
+    "ZW10"
+  ],
+  "n_genes": 200,
+  "trrust_summary": {
+    "total_interactions_in_db": 9396,
+    "edges_in_gene_subset": 1,
+    "n_tfs_in_subset": 1,
+    "n_targets_in_subset": 1,
+    "regulation_breakdown": {
+      "activation": 0,
+      "repression": 0,
+      "unknown": 1
+    }
+  },
+  "trrust_edges": [
+    [
+      "ATF4",
+      "MCL1"
+    ]
+  ],
+  "conditions": {
+    "real_data": {
+      "display_name": "Real Data (GIES)",
+      "n_edges": 1220,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1220,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1220,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "n_true_positive": 1220,
+          "n_predicted": 1220,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "n_true_positive": 1220,
+          "n_predicted": 1220,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    },
+    "elastic_net": {
+      "display_name": "Elastic Net",
+      "n_edges": 1222,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1222,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1222,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 0.4247135842880524,
+          "recall": 0.42540983606557375,
+          "f1": 0.4250614250614251,
+          "n_true_positive": 519,
+          "n_predicted": 1222,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 0.693126022913257,
+          "recall": 0.6942622950819672,
+          "f1": 0.6936936936936937,
+          "n_true_positive": 847,
+          "n_predicted": 1222,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    },
+    "cpa_real": {
+      "display_name": "CPA",
+      "n_edges": 1229,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1229,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1229,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 0.387306753458096,
+          "recall": 0.3901639344262295,
+          "f1": 0.38873009391588403,
+          "n_true_positive": 476,
+          "n_predicted": 1229,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 0.6883645240032547,
+          "recall": 0.6934426229508197,
+          "f1": 0.6908942425479787,
+          "n_true_positive": 846,
+          "n_predicted": 1229,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    },
+    "gears_real": {
+      "display_name": "GEARS",
+      "n_edges": 1192,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1192,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1192,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 0.41023489932885904,
+          "recall": 0.40081967213114755,
+          "f1": 0.4054726368159204,
+          "n_true_positive": 489,
+          "n_predicted": 1192,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 0.7013422818791947,
+          "recall": 0.6852459016393443,
+          "f1": 0.6932006633499171,
+          "n_true_positive": 836,
+          "n_predicted": 1192,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    },
+    "geneformer_real": {
+      "display_name": "Geneformer",
+      "n_edges": 1222,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1222,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1222,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 0.4320785597381342,
+          "recall": 0.43278688524590164,
+          "f1": 0.4324324324324324,
+          "n_true_positive": 528,
+          "n_predicted": 1222,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 0.6980360065466449,
+          "recall": 0.6991803278688524,
+          "f1": 0.6986076986076986,
+          "n_true_positive": 853,
+          "n_predicted": 1222,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    },
+    "overlay_resampled_real": {
+      "display_name": "Overlay Resampled",
+      "n_edges": 1215,
+      "track_b_vs_trrust": {
+        "directed": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1215,
+          "n_ground_truth": 1
+        },
+        "undirected": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_true_positive": 0,
+          "n_predicted": 1215,
+          "n_ground_truth": 1
+        }
+      },
+      "track_a_vs_gies_real": {
+        "directed": {
+          "precision": 0.42304526748971194,
+          "recall": 0.42131147540983604,
+          "f1": 0.42217659137577,
+          "n_true_positive": 514,
+          "n_predicted": 1215,
+          "n_ground_truth": 1220
+        },
+        "undirected": {
+          "precision": 0.6905349794238683,
+          "recall": 0.6877049180327869,
+          "f1": 0.68911704312115,
+          "n_true_positive": 839,
+          "n_predicted": 1215,
+          "n_ground_truth": 1220
+        }
+      },
+      "jaccard_with_trrust_undirected": 0.0
+    }
+  },
+  "concordance": {
+    "track_a_ranking_by_f1_undirected": {
+      "geneformer_real": 1,
+      "elastic_net": 2,
+      "gears_real": 3,
+      "cpa_real": 4,
+      "overlay_resampled_real": 5
+    },
+    "track_b_ranking_by_f1_undirected": {
+      "elastic_net": 1,
+      "cpa_real": 2,
+      "gears_real": 3,
+      "geneformer_real": 4,
+      "overlay_resampled_real": 5
+    },
+    "spearman_rho": 0.30000000000000004,
+    "n_conditions_compared": 5,
+    "conditions_compared": [
+      "cpa_real",
+      "elastic_net",
+      "gears_real",
+      "geneformer_real",
+      "overlay_resampled_real"
+    ]
+  }
+}
