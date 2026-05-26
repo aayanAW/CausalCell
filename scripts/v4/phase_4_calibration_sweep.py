@@ -22,9 +22,8 @@ import numpy as np
 import anndata as ad
 
 from causalcellbench.calibration import (
-    QuantileCalibrator,
-    CovariancePreservingCalibrator,
-    SparsityInjectionCalibrator,
+    CalibrationPipeline,
+    all_orderings,
 )
 
 INPUT_DIR = ROOT / "data" / "model_outputs_real_n200"
@@ -105,29 +104,14 @@ def train_test_split_perts(perts: list[str], train_frac: float = 0.8, seed: int 
 
 def fit_and_transform(order: list[str], *, real_log_fc_train, real_pert_shifts_train,
                       pred_log_fc_train, pred_log_fc_test):
-    """Fit calibrators on train, apply to test. Returns calibrated_test_log_fc."""
-    out = pred_log_fc_test.copy()
-    for mode in order:
-        if mode == "q":
-            cal = QuantileCalibrator().fit(
-                real_log_fc_train.flatten(), pred_log_fc_train.flatten()
-            )
-            shape = out.shape
-            out = cal.transform(out.flatten()).reshape(shape)
-        elif mode == "c":
-            cal = CovariancePreservingCalibrator(n_components=50, shrinkage=0.5).fit(
-                real_pert_shifts_train
-            )
-            out = cal.transform(out)
-        elif mode == "s":
-            target = float((np.abs(real_log_fc_train) < 0.05).mean())
-            cal = SparsityInjectionCalibrator(target_near_zero_frac=target).fit(
-                pred_log_fc_train
-            )
-            out = cal.transform(out)
-        else:
-            raise ValueError(f"unknown mode {mode}")
-    return out
+    """Fit calibration pipeline on train, apply to test. Returns calibrated_test_log_fc."""
+    p = CalibrationPipeline(order=order)
+    p.fit(
+        real_log_fc=real_log_fc_train,
+        real_pert_shifts=real_pert_shifts_train,
+        pred_log_fc=pred_log_fc_train,
+    )
+    return p.transform(pred_log_fc_test)
 
 
 def main():
@@ -145,13 +129,8 @@ def main():
     real_pert_shifts_train = real_pert_shifts[train_idx]
 
     sweep = {"orderings": [], "train_perts": train_perts, "test_perts": test_perts}
-    all_orders = []
-    # Single-mode
-    for m in MODE_KEYS:
-        all_orders.append([m])
-    # Pairs + triples (all permutations of 3-mode pipeline)
-    for p in permutations(MODE_KEYS):
-        all_orders.append(list(p))
+    # 3 single-mode + 6 full-pipeline orderings = 9 conditions per model
+    all_orders = [[m] for m in MODE_KEYS] + all_orderings()
 
     for model in MODELS:
         try:
