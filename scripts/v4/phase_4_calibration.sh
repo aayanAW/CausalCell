@@ -190,6 +190,5 @@ print('  orderings:', all_orderings())
 " || { echo "  Calibration import FAILED"; exit 1; }
 
 # Run sweep (placeholder: actual sweep depends on Phase 1 + Phase 2 deliverables)
-mkdir -p "$ROOT/results/calibration_modes"
-echo "  Phase 4 modules implemented. Sweep pending Phase 1+2 outputs."
-echo "  See scripts/v4/phase_4_calibration_sweep.py for the full sweep."
+mkdir -p "$ROOT/results/calibration_modes" "$ROOT/data/model_outputs_phase4"
+python3 "$ROOT/scripts/v4/phase_4_calibration_sweep.py" 2>&1 | tail -80
