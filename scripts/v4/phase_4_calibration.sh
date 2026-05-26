@@ -9,6 +9,13 @@ export OMP_NUM_THREADS=1 PYTHONPATH="$ROOT"
 # Generate Mode 2 + Mode 3 if not present
 mkdir -p "$ROOT/causalcellbench/calibration"
 
+# Modules already in place — skip overwrite if present
+if [ -f "$ROOT/causalcellbench/calibration/pipeline.py" ] \
+   && [ -f "$ROOT/causalcellbench/calibration/covariance_preservation.py" ] \
+   && [ -f "$ROOT/causalcellbench/calibration/sparsity_injection.py" ]; then
+    echo "  Calibration modules already present, skipping module write"
+else
+
 # Mode 2: covariance preservation using Σ_pert (per H7 audit fix)
 cat > "$ROOT/causalcellbench/calibration/covariance_preservation.py" <<'PY'
 """Covariance-preservation calibrator (Mode 2).
@@ -181,6 +188,7 @@ __all__ = [
     "all_orderings",
 ]
 PY
+fi  # end of "skip if modules already present"
 
 # Pre-flight test: import works
 python3 -c "

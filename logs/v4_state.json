@@ -1,8 +1,22 @@
 {
   "started_at": "2026-05-25T21:34:08Z",
-  "current_phase": "phase2_deep_rpe1_norman",
-  "completed_phases": [],
-  "failed_phases": [],
-  "status": "restarting",
-  "last_update": "2026-05-25T23:42:02Z"
+  "current_phase": null,
+  "completed_phases": [
+    "phase1_multiseed_n20",
+    "phase2_deep_rpe1_norman",
+    "phase3_state_multiseed",
+    "phase5_trackb",
+    "phase6_geneformer_contamination",
+    "phase7_baselines_ablations",
+    "phase8_engineering",
+    "phase9_writing",
+    "phase10_submission_prep",
+    "phase11_reproduction"
+  ],
+  "failed_phases": [
+    "phase0_rpe1_rerun",
+    "phase4_calibration"
+  ],
+  "status": "completed",
+  "last_update": "2026-05-26T02:04:12Z"
 }
