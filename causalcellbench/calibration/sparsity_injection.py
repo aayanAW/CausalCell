@@ -2,9 +2,6 @@
 
 Soft-thresholds predicted log2FC values such that the near-zero fraction
 matches a target (typically empirical real-data near-zero fraction).
-
-Uses textbook soft-thresholding sign(x)·max(|x|-τ, 0). V4 audit H8 dropped
-the non-standard rescaled form from V3 in favor of the standard form.
 """
 from __future__ import annotations
 import numpy as np
@@ -16,14 +13,12 @@ class SparsityInjectionCalibrator:
         self.target_near_zero_frac = float(target_near_zero_frac)
         self.near_zero_band = float(near_zero_band)
         self.tau_eps = float(tau_eps)
-        self.threshold: float | None = None
+        self.threshold = None
 
     def fit(self, log_fc_pred: np.ndarray) -> "SparsityInjectionCalibrator":
         abs_fc = np.abs(np.asarray(log_fc_pred, dtype=np.float64).flatten())
-        if abs_fc.size == 0:
-            self.threshold = 0.0
-            return self
-        lo, hi = 0.0, float(abs_fc.max() + self.tau_eps)
+        # Binary search for tau such that fraction(|FC| < tau) ≈ target
+        lo, hi = 0.0, float(abs_fc.max() + self.tau_eps) if abs_fc.size else 1.0
         while hi - lo > self.tau_eps:
             mid = (lo + hi) / 2.0
             frac = float((abs_fc < mid).mean())
@@ -40,5 +35,7 @@ class SparsityInjectionCalibrator:
         tau = self.threshold
         sign = np.sign(log_fc)
         abs_fc = np.abs(log_fc)
+        # Standard soft-thresholding (audit H8: use the textbook form, not the
+        # non-standard denominator I sketched in V3)
         shrunk = np.maximum(abs_fc - tau, 0.0)
         return sign * shrunk

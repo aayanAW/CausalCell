@@ -1,0 +1,6 @@
+{
+  "cell_line_holdout": {
+    "k562_geneformer_f1": 0.42534127643893865
+  },
+  "perturbation_holdout": {}
+}
