@@ -1,130 +1,117 @@
-# CausalCellBench
+# PerturbCausal
 
-**Evaluating whether virtual cell models preserve causal structure for gene regulatory network discovery.**
+A benchmark for testing whether virtual cell model (VCM) predicted Perturb-seq
+data can substitute for real Perturb-seq in downstream causal gene regulatory
+network recovery.
 
-CausalCellBench is a benchmark that tests whether AI-based perturbation prediction models (GEARS, CPA, Geneformer) can substitute for real CRISPR screens in causal gene regulatory network inference. Unlike existing benchmarks that evaluate prediction accuracy (MSE, correlation), CausalCellBench evaluates whether model outputs preserve the causal dependencies needed for interventional structure learning.
+## TL;DR
 
-## Key Findings
+Across multi-seed evaluation on Replogle K562, no deep VCM
+(GEARS, CPA, Geneformer V2, STATE) significantly exceeds a sparse linear
+regression baseline (ElasticNet) on causal-recovery F1. The substitutability
+failure decomposes into a magnitude marginal (~40%, post-hoc fixable via
+quantile matching) and a joint-structure residual (~60%, requiring
+training-time intervention).
 
-| Condition | AUPRC (50g) | AUPRC (200g) |
-|---|---|---|
-| Real Data (upper bound) | 1.000 | 1.000 |
-| ElasticNet (regression) | 0.396 | 0.454 |
-| GEARS | 0.385 | 0.401 |
-| Geneformer | 0.319 | 0.422 |
-| CPA | 0.322 | 0.405 |
+This extends the linear-baselines-beat-DL finding of
+[Ahlmann-Eltze & Huber 2025 *Nature Methods*](https://doi.org/10.1038/s41592-025-02772-6)
+from per-gene reconstruction to causal recovery.
 
-- **ElasticNet regression matches or outperforms all deep learning models** due to 23-fold effect-size inflation in DL predictions
-- **inspre analysis** reveals CPA and Geneformer contain zero detectable causal signal
-- **Multi-hop evaluation** shows 27% of false positives are correctly identified gene pairs with reversed directionality
-- **Model rankings are unstable across gene scales**, cautioning against single-scale conclusions
-- **Clinical translation** identifies 43 selectively essential hub genes in K562 targetable by FDA-approved drugs (tofacitinib, bortezomib)
-- **Cross-context validation** on RPE1 confirms the ElasticNet anomaly is universal
-
-## Installation
+## Install
 
 ```bash
-git clone https://github.com/aayanalwani/causalcellbench.git
-cd causalcellbench
-pip install -r requirements.txt
+git clone https://github.com/<repo>/perturbcausal.git
+cd perturbcausal
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
 ```
 
-For inspre (R-based causal discovery):
+For STATE inference (Arc Institute 2025 foundation model):
+
 ```bash
-# Install R >= 4.4
-Rscript -e 'install.packages("remotes"); remotes::install_github("brielin/inspre")'
+pip install -e .[state]
+# Apply transformers source patch documented in INSTALL.md
 ```
 
-## Data
+## Docker (recommended for reproducibility)
 
-Download the Replogle et al. (2022) Perturb-seq datasets:
 ```bash
-bash scripts/download_data.sh
+docker build -t perturbcausal .
+docker run --rm -v $(pwd)/results:/app/results perturbcausal
 ```
 
-This downloads K562 and RPE1 CRISPRi data from [Figshare](https://plus.figshare.com/articles/dataset/20029387).
+## Quick start
 
-## Usage
+```python
+import anndata as ad
+from causalcellbench.calibration import CalibrationPipeline
 
-### Run the full evaluation pipeline
+# Load a model's predicted perturbation means (any VCM)
+predictions = ad.read_h5ad("path/to/model_predictions.h5ad")
+
+# Fit the three-mode calibration pipeline on real-data control + perturbation
+# statistics, then apply to the predictions:
+pipeline = CalibrationPipeline(order=["sparsity", "quantile", "covariance"])
+pipeline.fit(
+    real_log_fc=real_log_fc_train,           # (n_train_perts, n_genes)
+    real_pert_shifts=real_pert_shifts_train, # (n_train_perts, n_genes)
+    pred_log_fc=predicted_log_fc_train,
+)
+calibrated = pipeline.transform(predicted_log_fc_test)
+```
+
+## Reproducing paper results
+
 ```bash
-python scripts/run_eval_local.py \
-  --data-path data/k562_real.h5ad \
-  --n-genes 200 \
-  --gene-list data/eval_genes_n200.txt \
-  --model-outputs-dir data/model_outputs_real_n200 \
-  --gies-cache-dir results/gies_cache
+make repro    # runs the seed=42 K562 N=200 evaluation
+make figures  # generates the manuscript figures from cached results
 ```
 
-### Run individual analysis phases
+Full multi-seed reproduction (~7-15h on a 16-core machine):
+
 ```bash
-# Phase 1: ElasticNet anomaly analysis
-python scripts/phase1_elasticnet_anomaly.py
-
-# Phase 2: Scale sweep (N=50-200)
-python scripts/phase2_scale_sweep.py
-
-# Phase 4: Multi-hop causal evaluation
-python scripts/phase4_multihop_metrics.py
-
-# Phase 5: inspre causal discovery
-python scripts/phase5_inspre_subprocess.py
-
-# Phase 7: Clinical translation (DepMap + DGIdb)
-python scripts/phase7_clinical.py
-
-# Phase 9: RPE1 cross-context
-python scripts/phase9_rpe1.py
+python scripts/run_multi_seed.py \
+    --n-genes 200 \
+    --seeds 42 123 456 789 1024 2048 4096 7919 13337 31337 65537 100003 \
+            142857 271828 314159 524287 1000003 1299709 1999993 2147483647 \
+    --extra-args="--skip-random --partition-size 20"
 ```
 
-### Generate figures
-```bash
-python scripts/generate_figures_n50.py --results results/eval_results_n50.json
-python scripts/generate_figures_n50.py --results results/eval_results_n200.json --outdir figures_n200
-```
-
-## Project Structure
+## Repository structure
 
 ```
-causalcellbench/
-├── causal/          # Causal discovery engines (GIES, GRNBoost2, DCDI)
-├── models/          # Model wrappers (GEARS, CPA, Geneformer, scGPT)
-├── eval/            # Evaluation metrics (AUPRC, SHD, Wasserstein, FOR)
-├── data/            # Data loaders (Replogle, ChIP-seq, TRRUST)
-└── calibration/     # Overlay sampling, quantile calibration
-
-scripts/              # Executable analysis scripts
-results/              # Cached results (JSON, CSV)
-figures/              # Publication figures (PDF, PNG)
+causalcellbench/    # Python package: data loaders, calibration, causal engines
+scripts/            # CLI scripts: training, evaluation, integration, plotting
+scripts/v4/         # V4-plan orchestrator + per-phase scripts
+submissions/icml/   # ICML / AI4Science LaTeX manuscript
+submissions/biorxiv # bioRxiv staging
+results/            # JSON outputs from all phases
+data/               # Local data caches (gitignored)
+tests/              # pytest suite
 ```
-
-## Methodological Contributions
-
-1. **Overlay Sampling**: Standard NB sampling destroys gene-gene correlations needed for causal discovery. Our overlay method bootstraps control cells and applies fold-change shifts, preserving biological covariance structure.
-
-2. **inspre Integration**: We integrate the inspre algorithm (Brown et al., Nat Comms 2025) as a scalable alternative to GIES, enabling genome-scale causal discovery in seconds rather than days.
-
-3. **Selective Essentiality**: Clinical translation uses differential DepMap scores (K562 vs pan-cell-line mean) to identify CML-specific vulnerabilities, avoiding universal housekeeping genes.
 
 ## Citation
 
+If you use PerturbCausal, please cite:
+
 ```bibtex
-@article{alwani2026causalcellbench,
-  title={The Causal Blind Spot: Why Virtual Cell Models Fail at Gene Regulatory Network Discovery},
-  author={Alwani, Aayan},
-  year={2026}
+@article{perturbcausal2026,
+  author    = {Anonymous},
+  title     = {Virtual Cell Models Inflate Perturbation Effect Sizes and
+               Undermine Causal Gene Regulatory Network Recovery},
+  journal   = {bioRxiv},
+  year      = {2026},
+  note      = {Submitted to NeurIPS Datasets and Benchmarks Track 2026}
 }
 ```
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+MIT — see `LICENSE`.
 
-## References
+## Acknowledgements
 
-1. Replogle et al. (2022). Mapping information-rich genotype-phenotype landscapes with genome-scale Perturb-seq. *Cell*.
-2. Chevalley et al. (2025). CausalBench: A large-scale benchmark for network inference. *Communications Biology*.
-3. Roohani et al. (2024). GEARS: Predicting transcriptional outcomes of novel multigene perturbations. *Nature Biotechnology*.
-4. Lotfollahi et al. (2023). CPA: Predicting cellular responses to complex perturbations. *Molecular Systems Biology*.
-5. Theodoris et al. (2023). Transfer learning enables predictions in network biology. *Nature*.
-6. Brown et al. (2025). Large-scale causal discovery using interventional data. *Nature Communications*.
+This work builds directly on the K562/RPE1 Perturb-seq atlas from Replogle
+et al. 2022, the inspre algorithm of Brown et al. 2025, the CausalBench
+framework of Chevalley et al. 2025, and the STATE foundation model released
+by Arc Institute (Adduri et al. 2025).

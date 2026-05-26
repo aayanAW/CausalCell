@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "PerturbCausal: A causal-recovery benchmark for virtual cell models"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: "Anonymous"
+    given-names: "Submission"
+license: MIT
+version: 1.0.0
+date-released: 2026-05-25
+repository-code: "https://github.com/<repo>/perturbcausal"
+preferred-citation:
+  type: article
+  title: "Virtual Cell Models Inflate Perturbation Effect Sizes and Undermine Causal Gene Regulatory Network Recovery"
+  authors:
+    - family-names: "Anonymous"
+      given-names: "Authors"
+  year: 2026
+  journal: "bioRxiv"
+  url: "https://doi.org/<TBD>"
