@@ -362,8 +362,25 @@ The full-path validation tempers the binary ``zero edges from CPA and Geneformer
 \paragraph{Why does calibration help two of three models but hurt the third?}
 CPA and GEARS gain 1--2 F1 points after quantile matching erases their magnitude inflation. Geneformer (best vanilla F1 at 0.432) loses 0.9 F1 under the same calibration, plausibly because its foundation-model pretraining yields a magnitude distribution that is already approximately correct; uniform global matching erases this implicit calibration without replacing it. This argues for a \emph{learned} per-model shrinkage rather than uniform application.
 
-\paragraph{Magnitude calibration is necessary but insufficient.}
-Calibration corrects $\sim$40\% of the substitutability gap (the marginal piece) and leaves $\sim$60\% (the joint piece) untouched. The 27--30\% reversed-edge fraction in multi-hop analysis directly manifests joint-structure distortion: deep models connect the right gene pairs in the wrong direction, an error distributional calibration cannot fix because it is a property of conditional-independence structure. A direct test: add covariance-preservation (project predicted shifts onto the principal subspace of control covariance) and sparsity-injection (soft-threshold small effects to match the empirical near-zero fraction) modes, and measure gap closure.
+\paragraph{Three-mode calibration sweep with proper train/test discipline.}
+\label{sec:calib-sweep}
+We extend the original Bolstad--Reinhard quantile-matching calibration with two additional modes that target joint-distribution structure: covariance preservation (Mode 2: project predicted shift onto the top-50 principal-subspace of real-perturbation covariance, shrinkage 0.5) and sparsity injection (Mode 3: soft-threshold $|\log_2 \mathrm{FC}|$ to match the empirical near-zero fraction). All six permutations of the three modes are evaluated, fit on a held-out 160-perturbation training set and applied to a 40-perturbation test set, with downstream GIES on each calibrated prediction. Table~\ref{tab:calib_sweep} reports the F1 of the best-ordering per model and the corresponding vanilla (uncalibrated) F1 on the same 40-perturbation test split. Across nine ordering choices (three single-mode plus six pipeline permutations), \textbf{no calibration ordering exceeds the uncalibrated baseline on any model}: GEARS vanilla 0.303 vs.\ best calibrated 0.289 ($-0.014$); CPA 0.309 vs.\ 0.302 ($-0.007$); Geneformer 0.319 vs.\ 0.290 ($-0.029$). With the train/test split applied honestly, the magnitude calibration story does not survive on a held-out perturbation set: post-hoc calibration as currently implemented redistributes prediction mass on the magnitude marginal in a way that hurts, rather than helps, downstream causal recovery. The substitutability gap is therefore not in the magnitude marginal; it is in the joint structure, and joint-structure calibration via the covariance and sparsity modes evaluated here also fails to recover the gap. This is a stronger negative result than the V2.15 single-seed in-domain finding; it implies that closing the substitutability gap requires training-time intervention (e.g.\ a covariance-preserving regularizer in the perturbation-prediction loss) rather than post-hoc rescaling.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Model} & \textbf{Vanilla F1} & \textbf{Best calibrated F1} & \textbf{Best ordering} \\
+\midrule
+GEARS       & 0.303 & 0.289 & \texttt{s} (sparsity-only) \\
+CPA         & 0.309 & 0.302 & \texttt{scq} (sparsity$\to$covariance$\to$quantile) \\
+Geneformer  & 0.319 & 0.290 & \texttt{s} (sparsity-only) \\
+\bottomrule
+\end{tabular}
+\caption{Phase~4 calibration sweep on K562 test split (40 of 200 perturbations held out). Per-model best F1 over nine ordering choices vs.\ the uncalibrated baseline on the same test split. No ordering exceeds vanilla; the substitutability gap does not close under post-hoc magnitude or joint-structure calibration.}
+\label{tab:calib_sweep}
+\end{table}
 
 % STATE-INTEGRATED-V2
 \paragraph{STATE foundation model on K562.}
