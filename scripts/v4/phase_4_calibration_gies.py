@@ -91,10 +91,10 @@ def main():
         # Overlay sample per perturbation
         pert_matrices = []
         pert_labels = []
-        for p in cal_perts:
+        for i_p, p in enumerate(cal_perts):
             pred_vec = pred_means[p]
             cells = sample_perturbed_cells_overlay(
-                ctrl_subset, ctrl_mean_eval, pred_vec, N_PERT_CELLS, rng
+                ctrl_subset, pred_vec, N_PERT_CELLS, seed=SEED + i_p
             )
             pert_matrices.append(cells)
             pert_labels.extend([p] * N_PERT_CELLS)

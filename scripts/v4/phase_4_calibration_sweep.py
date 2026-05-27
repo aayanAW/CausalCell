@@ -138,8 +138,12 @@ def main():
         except FileNotFoundError:
             print(f"  {model}: predictions not found, skip")
             continue
-        # Build pred_log_fc (n_predicted_perts, n_genes)
-        pred_log_fc = np.log2((pred + EPS) / (ctrl_means + EPS))
+        # Build pred_log_fc (n_predicted_perts, n_genes). Clip pred ≥ 0 because
+        # some models (GEARS) emit small negative expression values.
+        pred_safe = np.maximum(pred, 0.0)
+        pred_log_fc = np.log2((pred_safe + EPS) / (ctrl_means + EPS))
+        # Sanity: any remaining NaN/Inf → 0 (means no fold-change)
+        pred_log_fc = np.nan_to_num(pred_log_fc, nan=0.0, posinf=10.0, neginf=-10.0)
         # Align pred_pert_labels with the real perturbation order
         pert_to_pred_idx = {p: i for i, p in enumerate(pred_pert_labels)}
         # Construct train/test split using the same pert ordering

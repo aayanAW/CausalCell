@@ -1,0 +1,245 @@
+{
+  "gears_q": {
+    "model": "gears",
+    "order": "q",
+    "f1": 0.258299,
+    "precision": 0.351695,
+    "recall": 0.204098,
+    "n_edges": 708,
+    "wall_s": 15.604486227035522
+  },
+  "gears_c": {
+    "model": "gears",
+    "order": "c",
+    "f1": 0.255765,
+    "precision": 0.354651,
+    "recall": 0.2,
+    "n_edges": 688,
+    "wall_s": 21.042264223098755
+  },
+  "gears_s": {
+    "model": "gears",
+    "order": "s",
+    "f1": 0.28882,
+    "precision": 0.391854,
+    "recall": 0.228689,
+    "n_edges": 712,
+    "wall_s": 36.243051052093506
+  },
+  "gears_sqc": {
+    "model": "gears",
+    "order": "sqc",
+    "f1": 0.251435,
+    "precision": 0.345768,
+    "recall": 0.197541,
+    "n_edges": 697,
+    "wall_s": 14.81380009651184
+  },
+  "gears_scq": {
+    "model": "gears",
+    "order": "scq",
+    "f1": 0.255252,
+    "precision": 0.355263,
+    "recall": 0.19918,
+    "n_edges": 684,
+    "wall_s": 15.75501012802124
+  },
+  "gears_qsc": {
+    "model": "gears",
+    "order": "qsc",
+    "f1": 0.260417,
+    "precision": 0.357143,
+    "recall": 0.204918,
+    "n_edges": 700,
+    "wall_s": 13.388763189315796
+  },
+  "gears_qcs": {
+    "model": "gears",
+    "order": "qcs",
+    "f1": 0.281823,
+    "precision": 0.390421,
+    "recall": 0.220492,
+    "n_edges": 689,
+    "wall_s": 12.975749015808105
+  },
+  "gears_csq": {
+    "model": "gears",
+    "order": "csq",
+    "f1": 0.277115,
+    "precision": 0.377652,
+    "recall": 0.218852,
+    "n_edges": 707,
+    "wall_s": 14.771969079971313
+  },
+  "gears_cqs": {
+    "model": "gears",
+    "order": "cqs",
+    "f1": 0.27044,
+    "precision": 0.375,
+    "recall": 0.211475,
+    "n_edges": 688,
+    "wall_s": 20.070647954940796
+  },
+  "cpa_q": {
+    "model": "cpa",
+    "order": "q",
+    "f1": 0.267144,
+    "precision": 0.355586,
+    "recall": 0.213934,
+    "n_edges": 734,
+    "wall_s": 46.81196093559265
+  },
+  "cpa_c": {
+    "model": "cpa",
+    "order": "c",
+    "f1": 0.275182,
+    "precision": 0.375354,
+    "recall": 0.217213,
+    "n_edges": 706,
+    "wall_s": 13.496329069137573
+  },
+  "cpa_s": {
+    "model": "cpa",
+    "order": "s",
+    "f1": 0.269932,
+    "precision": 0.370529,
+    "recall": 0.212295,
+    "n_edges": 699,
+    "wall_s": 61.58652901649475
+  },
+  "cpa_sqc": {
+    "model": "cpa",
+    "order": "sqc",
+    "f1": 0.23614,
+    "precision": 0.315934,
+    "recall": 0.188525,
+    "n_edges": 728,
+    "wall_s": 13.873678207397461
+  },
+  "cpa_scq": {
+    "model": "cpa",
+    "order": "scq",
+    "f1": 0.301595,
+    "precision": 0.405256,
+    "recall": 0.240164,
+    "n_edges": 723,
+    "wall_s": 14.780778884887695
+  },
+  "cpa_qsc": {
+    "model": "cpa",
+    "order": "qsc",
+    "f1": 0.292608,
+    "precision": 0.391484,
+    "recall": 0.233607,
+    "n_edges": 728,
+    "wall_s": 21.032098054885864
+  },
+  "cpa_qcs": {
+    "model": "cpa",
+    "order": "qcs",
+    "f1": 0.283067,
+    "precision": 0.38036,
+    "recall": 0.22541,
+    "n_edges": 723,
+    "wall_s": 13.48000717163086
+  },
+  "cpa_csq": {
+    "model": "cpa",
+    "order": "csq",
+    "f1": 0.253755,
+    "precision": 0.344585,
+    "recall": 0.20082,
+    "n_edges": 711,
+    "wall_s": 15.627316951751709
+  },
+  "cpa_cqs": {
+    "model": "cpa",
+    "order": "cqs",
+    "f1": 0.279335,
+    "precision": 0.38102,
+    "recall": 0.220492,
+    "n_edges": 706,
+    "wall_s": 15.719021081924438
+  },
+  "geneformer_q": {
+    "model": "geneformer",
+    "order": "q",
+    "f1": 0.251985,
+    "precision": 0.355755,
+    "recall": 0.195082,
+    "n_edges": 669,
+    "wall_s": 13.945265769958496
+  },
+  "geneformer_c": {
+    "model": "geneformer",
+    "order": "c",
+    "f1": 0.251579,
+    "precision": 0.351471,
+    "recall": 0.195902,
+    "n_edges": 680,
+    "wall_s": 16.40851092338562
+  },
+  "geneformer_s": {
+    "model": "geneformer",
+    "order": "s",
+    "f1": 0.290391,
+    "precision": 0.408012,
+    "recall": 0.22541,
+    "n_edges": 674,
+    "wall_s": 21.89303421974182
+  },
+  "geneformer_sqc": {
+    "model": "geneformer",
+    "order": "sqc",
+    "f1": 0.267374,
+    "precision": 0.378947,
+    "recall": 0.206557,
+    "n_edges": 665,
+    "wall_s": 14.07716417312622
+  },
+  "geneformer_scq": {
+    "model": "geneformer",
+    "order": "scq",
+    "f1": 0.242872,
+    "precision": 0.341246,
+    "recall": 0.188525,
+    "n_edges": 674,
+    "wall_s": 13.32020092010498
+  },
+  "geneformer_qsc": {
+    "model": "geneformer",
+    "order": "qsc",
+    "f1": 0.236997,
+    "precision": 0.342636,
+    "recall": 0.181148,
+    "n_edges": 645,
+    "wall_s": 14.15321397781372
+  },
+  "geneformer_qcs": {
+    "model": "geneformer",
+    "order": "qcs",
+    "f1": 0.243955,
+    "precision": 0.354134,
+    "recall": 0.186066,
+    "n_edges": 641,
+    "wall_s": 12.82498288154602
+  },
+  "geneformer_csq": {
+    "model": "geneformer",
+    "order": "csq",
+    "f1": 0.258065,
+    "precision": 0.363636,
+    "recall": 0.2,
+    "n_edges": 671,
+    "wall_s": 16.33899712562561
+  },
+  "geneformer_cqs": {
+    "model": "geneformer",
+    "order": "cqs",
+    "f1": 0.262434,
+    "precision": 0.370149,
+    "recall": 0.203279,
+    "n_edges": 670,
+    "wall_s": 13.97520399093628
+  }
+}
