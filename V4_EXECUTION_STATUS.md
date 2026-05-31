@@ -159,3 +159,24 @@ See `submissions/USER_ACTIONS.md` for full detail.
 - STATE multi-seed (3 seeds) — also needs a `triton_key` import fix in the embedding image.
 - Phase 6 Geneformer contamination (needs Geneformer K562-vs-RPE1).
 - **To resume:** raise the Modal spend limit, then `bash scripts/v4/run_phase2_serial.sh` (runs the 5 jobs ONE AT A TIME to avoid the GPU-capacity thrash seen with 6 concurrent), then `bash scripts/v4/download_phase2_predictions.sh` + `bash scripts/v4/phase_2_eval.sh` + `python3 scripts/v4/phase_2_aggregate.py`.
+
+---
+
+## Update 2026-05-31 — CPA deep model on BOTH new datasets (cap raised then re-hit)
+
+User raised the Modal spend limit; ran more jobs before re-hitting it. **CPA now evaluated cross-context AND cross-paradigm** (the core deep-model deliverable):
+
+| Dataset | CPA F1 [95% CI] | Random | ElasticNet | real edges |
+|---|---|---|---|---|
+| RPE1 (cross-context, CRISPRi) | **0.360 [0.345, 0.378]** | 0.348 | 0.340 | 1137 |
+| Norman (cross-paradigm, CRISPRa) | **0.182 [0.158, 0.208]** | 0.180 | 0.192 | 209 |
+
+**Finding:** a deep VCM (CPA) retrained from scratch on a new cell context (RPE1) and a new perturbation paradigm (CRISPRa, Norman) recovers no more of the real causal graph than chance — the substitutability gap is neither K562- nor CRISPRi-specific. STATE seed42 (K562) re-evaluated: F1=0.462.
+
+Manuscript updated (scope table, RPE1 §, Norman §, limitations); PDF rebuilt (236 KiB).
+
+### Still blocked on the (re-hit) Modal spend cap
+- GEARS rpe1/norman: **fixed** the GO-graph hang (was building 1 PyG graph per 30k cells → 2h+ hang; now caps to `max_ctrl_cells=200` + `max_cells_per_pert=50`, ~10k cells). Cheap to rerun once cap lifts.
+- STATE seed123/456 (multi-seed CI; seed42 done).
+- Geneformer rpe1/norman: deprioritized — it is a similarity-heuristic (not learned ISP) and was pathologically slow; CPA carries the cross-dataset deep-model claim. Documented as foundation-model arm = K562-only.
+- **Resume:** raise cap, then `bash scripts/v4/run_phase2_serial.sh` (GEARS now hang-free) + relaunch STATE 123/456.
