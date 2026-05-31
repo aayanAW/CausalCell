@@ -77,8 +77,15 @@ image = (
         # CPU-only torch since Modal GPU exposure was unreliable for this
         # image. SE-600M on CPU is slower but completes reliably.
         "pip install torch==2.4.1+cpu --index-url https://download.pytorch.org/whl/cpu --force-reinstall --no-deps",
+        # Fix `ImportError: cannot import name 'triton_key'`: a stale triton 2.x
+        # was on the path; torch 2.4.1 needs triton 3.0.0 (which defines
+        # triton_key). Pin it explicitly.
+        "pip install triton==3.0.0 --force-reinstall --no-deps || true",
     )
-    .env({"PYTHONUNBUFFERED": "1", "TOKENIZERS_PARALLELISM": "false"})
+    # Belt-and-suspenders: CPU SE-600M inference never needs torch.compile/
+    # inductor, so disable it to avoid importing triton at all.
+    .env({"PYTHONUNBUFFERED": "1", "TOKENIZERS_PARALLELISM": "false",
+          "TORCH_COMPILE_DISABLE": "1", "TORCHINDUCTOR_DISABLE": "1"})
 )
 
 

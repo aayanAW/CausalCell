@@ -16,6 +16,13 @@
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
+      "model": "cpa",
+      "f1": 0.360483,
+      "ub": 1.0,
+      "gap": 0.639517
+    },
+    {
+      "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "elastic_net",
       "f1": 0.339689,
       "ub": 1.0,
