@@ -180,3 +180,24 @@ Manuscript updated (scope table, RPE1 §, Norman §, limitations); PDF rebuilt (
 - STATE seed123/456 (multi-seed CI; seed42 done).
 - Geneformer rpe1/norman: deprioritized — it is a similarity-heuristic (not learned ISP) and was pathologically slow; CPA carries the cross-dataset deep-model claim. Documented as foundation-model arm = K562-only.
 - **Resume:** raise cap, then `bash scripts/v4/run_phase2_serial.sh` (GEARS now hang-free) + relaunch STATE 123/456.
+
+---
+
+## FINAL 2026-05-31 — Phase 2/3 COMPLETE (both deep models, both new datasets)
+
+GEARS + CPA both retrained on RPE1 + Norman and evaluated through GIES. Full cross-dataset substitutability table (bootstrap-mean F1 [95% CI]):
+
+| Dataset (real edges) | GEARS | CPA | ElasticNet | Random |
+|---|---|---|---|---|
+| RPE1 cross-context (1137) | 0.321 [0.304,0.337] | 0.361 [0.343,0.377] | 0.340 [0.324,0.358] | 0.347 [0.329,0.363] |
+| Norman cross-paradigm (209) | 0.211 [0.176,0.248] | 0.182 [0.155,0.212] | 0.190 [0.158,0.223] | 0.179 [0.147,0.209] |
+
+**Headline:** TWO architecturally distinct trained deep VCMs (GEARS, CPA) recover no more of the real causal graph than chance on BOTH a new cell context (RPE1) and a new perturbation paradigm (CRISPRa, Norman) — all CIs overlap the random floor. The substitutability gap is not K562-, CRISPRi-, or single-model-specific.
+
+**STATE multi-seed (K562, n=3):** per-seed [0.462, 0.040, 0.051], mean 0.184 [-0.088, 0.457] — the single-seed 0.462 does NOT replicate; STATE shows no robust advantage either.
+
+**cell-gears dependency rot fixed** (4 issues): cell-cap for the per-cell PyG GO-graph hang; `pert_list`→getattr; `Series.nonzero` + numpy-alias monkeypatches; 6h timeout. STATE triton pinned to 3.0.0.
+
+**Deliberately omitted:** Geneformer on RPE1/Norman (its "prediction" is a cosine-similarity heuristic over the control mean, not learned ISP — would not be a real trained-model test). Phase 6 clean contamination test needs a corpus-excluded held-out atlas that does not exist.
+
+Manuscript fully updated (scope table, RPE1 §, Norman §, STATE multi-seed §, limitations, intro, conclusion); PDF rebuilt (238 KiB). **Project at full honest scope.**

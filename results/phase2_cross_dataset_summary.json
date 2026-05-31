@@ -16,59 +16,73 @@
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
-      "model": "cpa",
-      "f1": 0.361146,
+      "model": "gears",
+      "f1": 0.320712,
       "ub": 1.0,
-      "gap": 0.638854
+      "gap": 0.679288
+    },
+    {
+      "dataset": "RPE1 (cross-context, CRISPRi)",
+      "model": "cpa",
+      "f1": 0.36085,
+      "ub": 1.0,
+      "gap": 0.63915
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "elastic_net",
-      "f1": 0.339419,
+      "f1": 0.340133,
       "ub": 1.0,
-      "gap": 0.660581
+      "gap": 0.659867
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "overlay_resampled_real",
-      "f1": 0.324671,
+      "f1": 0.32541,
       "ub": 1.0,
-      "gap": 0.6753290000000001
+      "gap": 0.67459
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "random",
-      "f1": 0.348786,
+      "f1": 0.34703,
       "ub": 1.0,
-      "gap": 0.651214
+      "gap": 0.65297
+    },
+    {
+      "dataset": "Norman (cross-paradigm, CRISPRa)",
+      "model": "gears",
+      "f1": 0.210804,
+      "ub": 1.0,
+      "gap": 0.789196
     },
     {
       "dataset": "Norman (cross-paradigm, CRISPRa)",
       "model": "cpa",
-      "f1": 0.182347,
+      "f1": 0.182492,
       "ub": 1.0,
-      "gap": 0.817653
+      "gap": 0.817508
     },
     {
       "dataset": "Norman (cross-paradigm, CRISPRa)",
       "model": "elastic_net",
-      "f1": 0.191793,
+      "f1": 0.190258,
       "ub": 1.0,
-      "gap": 0.808207
+      "gap": 0.809742
     },
     {
       "dataset": "Norman (cross-paradigm, CRISPRa)",
       "model": "overlay_resampled_real",
-      "f1": 0.226042,
+      "f1": 0.223109,
       "ub": 1.0,
-      "gap": 0.773958
+      "gap": 0.776891
     },
     {
       "dataset": "Norman (cross-paradigm, CRISPRa)",
       "model": "random",
-      "f1": 0.180033,
+      "f1": 0.179056,
       "ub": 1.0,
-      "gap": 0.819967
+      "gap": 0.820944
     }
   ],
   "real_ub": {
