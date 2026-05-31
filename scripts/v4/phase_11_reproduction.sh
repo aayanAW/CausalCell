@@ -6,9 +6,11 @@ cd "$ROOT" || exit 1
 
 WORKTREE="/tmp/perturbcausal-repro-$(date +%Y%m%d%H%M)"
 echo "  Creating fresh worktree at $WORKTREE"
-git worktree add "$WORKTREE" v4-execution 2>&1 | tail -5
+# Detached HEAD avoids the "branch already checked out" conflict that occurs
+# when the current working tree is already on v4-execution.
+git worktree add --detach "$WORKTREE" v4-execution 2>&1 | tail -5
 
-cd "$WORKTREE"
+cd "$WORKTREE" || { echo "  ERROR: worktree creation failed"; exit 1; }
 
 # Try the Makefile if it exists
 if [ -f "Makefile" ]; then

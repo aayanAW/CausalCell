@@ -1,0 +1,72 @@
+{
+  "rows": [
+    {
+      "dataset": "K562 (in-domain, CRISPRi)",
+      "model": "elastic_net",
+      "f1": 0.331156,
+      "ub": 1.0,
+      "gap": 0.668844
+    },
+    {
+      "dataset": "K562 (in-domain, CRISPRi)",
+      "model": "overlay_resampled_real",
+      "f1": 0.34222,
+      "ub": 1.0,
+      "gap": 0.65778
+    },
+    {
+      "dataset": "RPE1 (cross-context, CRISPRi)",
+      "model": "elastic_net",
+      "f1": 0.339689,
+      "ub": 1.0,
+      "gap": 0.660311
+    },
+    {
+      "dataset": "RPE1 (cross-context, CRISPRi)",
+      "model": "overlay_resampled_real",
+      "f1": 0.324995,
+      "ub": 1.0,
+      "gap": 0.6750050000000001
+    },
+    {
+      "dataset": "RPE1 (cross-context, CRISPRi)",
+      "model": "random",
+      "f1": 0.348063,
+      "ub": 1.0,
+      "gap": 0.651937
+    },
+    {
+      "dataset": "Norman (cross-paradigm, CRISPRa)",
+      "model": "cpa",
+      "f1": 0.182347,
+      "ub": 1.0,
+      "gap": 0.817653
+    },
+    {
+      "dataset": "Norman (cross-paradigm, CRISPRa)",
+      "model": "elastic_net",
+      "f1": 0.191793,
+      "ub": 1.0,
+      "gap": 0.808207
+    },
+    {
+      "dataset": "Norman (cross-paradigm, CRISPRa)",
+      "model": "overlay_resampled_real",
+      "f1": 0.226042,
+      "ub": 1.0,
+      "gap": 0.773958
+    },
+    {
+      "dataset": "Norman (cross-paradigm, CRISPRa)",
+      "model": "random",
+      "f1": 0.180033,
+      "ub": 1.0,
+      "gap": 0.819967
+    }
+  ],
+  "real_ub": {
+    "K562 (in-domain, CRISPRi)": 1.0,
+    "RPE1 (cross-context, CRISPRi)": 1.0,
+    "Norman (cross-paradigm, CRISPRa)": 1.0
+  }
+}

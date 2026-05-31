@@ -173,9 +173,16 @@ def _run_gies_partition(args_tuple):
     data_list = []
     intervention_targets_list = []
 
+    # Deterministic tiny jitter (std 1e-3 == N(0,1e-6)) breaks the GIES
+    # gauss_int degeneracy (1/omega -> inf -> infinite hill-climbing) on genes
+    # with zero variance under a given interventional regime — required for the
+    # Norman partitions; below numerical noise for well-conditioned data so it
+    # does not measurably alter recovered edge sets (see manuscript appendix).
+    _jit = np.random.default_rng(1234 + p_idx)
     for label, cell_indices in regimes.items():
-        X_regime = expression_matrix[cell_indices][:, partition_idx]
-        data_list.append(X_regime.astype(np.float64))
+        X_regime = expression_matrix[cell_indices][:, partition_idx].astype(np.float64)
+        X_regime = X_regime + _jit.normal(0.0, 1e-3, size=X_regime.shape)
+        data_list.append(X_regime)
         if label == "non-targeting":
             intervention_targets_list.append([])
         elif label in partition_gene_set:
@@ -1087,7 +1094,9 @@ def main(args):
     # ------------------------------------------------------------------
     logger.info("Step 2: Extracting controls and selecting genes")
 
-    pert_col = "gene"  # Replogle K562
+    pert_col = getattr(args, "pert_col", "gene")  # Replogle K562='gene'; Norman/RPE1='perturbation'
+    assert pert_col in adata.obs.columns, (
+        f"--pert-col '{pert_col}' not in obs {list(adata.obs.columns)}")
 
     # Find control cells
     control_mask = adata.obs[pert_col] == "non-targeting"
@@ -1708,7 +1717,9 @@ write.csv(G_best, out_path, row.names=FALSE)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CausalCellBench local evaluation")
-    parser.add_argument("--data-path", default="data/k562_real.h5ad", help="Path to K562 h5ad")
+    parser.add_argument("--data-path", default="data/k562_real.h5ad", help="Path to dataset h5ad")
+    parser.add_argument("--pert-col", default="gene",
+                        help="obs column with perturbation labels (Replogle='gene', Norman/RPE1='perturbation')")
     parser.add_argument("--n-genes", type=int, default=100, help="Number of genes to evaluate")
     parser.add_argument("--partition-size", type=int, default=30, help="GIES partition size")
     parser.add_argument("--n-cells", type=int, default=100, help="Cells per perturbation")

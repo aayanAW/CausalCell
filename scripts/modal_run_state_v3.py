@@ -89,7 +89,7 @@ image = (
     volumes={"/data": vol},
     memory=131072,  # 128 GB to head off OOM kills (SE-600M peak with state pkg overhead unknown)
 )
-def run_state_infer():
+def run_state_infer(n_cells_per_pert: int = 1, n_ctrl_keep: int = 120, seed: int = 42):
     import os, subprocess, json, time, sys
     from pathlib import Path
     import torch
@@ -219,20 +219,20 @@ def run_state_infer():
     # plus enough controls for overlay sampling -> a few hundred cells suffices.
     print("\nSubsetting cells for tractable CPU embedding...")
     pert_col = "gene"
-    rng_sub = np.random.default_rng(42)
+    rng_sub = np.random.default_rng(seed)
     is_ctrl_mask = (adata.obs[pert_col].values == "non-targeting")
     ctrl_idx_all = np.where(is_ctrl_mask)[0]
     pert_idx_all = np.where(~is_ctrl_mask)[0]
-    n_ctrl_keep = min(120, len(ctrl_idx_all))
+    n_ctrl_keep = min(n_ctrl_keep, len(ctrl_idx_all))
     ctrl_keep = rng_sub.choice(ctrl_idx_all, size=n_ctrl_keep, replace=False)
-    # 1 cell per perturbation -> ~320 total cells.
-    # 8th attempt (550 cells) was killed at 77% by chained_pipeline's 3hr
-    # timeout (now fixed to 6hr). Reducing to 320 also adds 2x headroom.
+    # n_cells_per_pert cells per perturbation. seed=42/n_cells_per_pert=1 ->
+    # the original ~320-cell run; multi-seed uses n_cells_per_pert=5,
+    # n_ctrl_keep=200 -> ~1200 cells (V4 Phase 3, ~9.3h CPU per seed).
     pert_labels = adata.obs[pert_col].values
     pert_keep = []
     for g in sorted(set(pert_labels[pert_idx_all])):
         gidx = np.where(pert_labels == g)[0]
-        pert_keep.extend(rng_sub.choice(gidx, size=min(1, len(gidx)), replace=False).tolist())
+        pert_keep.extend(rng_sub.choice(gidx, size=min(n_cells_per_pert, len(gidx)), replace=False).tolist())
     keep = np.concatenate([ctrl_keep, np.array(pert_keep, dtype=int)])
     adata = adata[keep].copy()
     print(f"  subset: {adata.shape}  (controls={n_ctrl_keep}, perturbed={len(pert_keep)})")
@@ -296,7 +296,7 @@ def run_state_infer():
     print(f"  embedded h5ad: {os.path.getsize(pre_emb) / 1e6:.1f} MB")
 
     # STAGE 2: STATE inference using the X_state embeddings.
-    out_path = "/data/results/model_outputs_real_n200_state/state_predictions.h5ad"
+    out_path = f"/data/results/model_outputs_real_n200_state/state_predictions_seed{seed}.h5ad"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     cmd_infer = ["state", "tx", "infer",
@@ -333,13 +333,16 @@ def run_state_infer():
     volumes={"/data": vol},
     memory=131072,
 )
-def chained_pipeline() -> dict:
+def chained_pipeline(n_cells_per_pert: int = 1, n_ctrl_keep: int = 120, seed: int = 42) -> dict:
     """Detach-safe wrapper."""
-    return run_state_infer.local()
+    return run_state_infer.local(n_cells_per_pert=n_cells_per_pert,
+                                 n_ctrl_keep=n_ctrl_keep, seed=seed)
 
 
 @app.local_entrypoint()
-def main():
-    handle = chained_pipeline.spawn()
-    print(f"Spawned function call: {handle.object_id}")
-    print("STATE inference will run on Modal A10G regardless of local CLI state.")
+def main(n_cells_per_pert: int = 1, n_ctrl_keep: int = 120, seed: int = 42):
+    handle = chained_pipeline.spawn(n_cells_per_pert=n_cells_per_pert,
+                                    n_ctrl_keep=n_ctrl_keep, seed=seed)
+    print(f"Spawned function call: {handle.object_id} "
+          f"(seed={seed}, n_cells_per_pert={n_cells_per_pert}, n_ctrl_keep={n_ctrl_keep})")
+    print("STATE inference will run on Modal CPU regardless of local CLI state.")

@@ -198,7 +198,8 @@ def main():
             "wall_time_s": wall,
         },
     }
-    out = STATE_DIR / "state_f1_summary.json"
+    out = STATE_DIR / (f"state_f1_summary_seed{SEED}.json" if SEED != 42
+                       else "state_f1_summary.json")
     with open(out, "w") as fh:
         json.dump(summary, fh, indent=2)
     print(f"\nWrote {out}")
@@ -206,4 +207,13 @@ def main():
 
 
 if __name__ == "__main__":
+    import argparse
+    _p = argparse.ArgumentParser(description="STATE GIES eval (multi-seed capable)")
+    _p.add_argument("--seed", type=int, default=42)
+    _p.add_argument("--pred-path", default=None,
+                    help="Override prediction h5ad (e.g. state_predictions_seed123.h5ad)")
+    _a = _p.parse_args()
+    SEED = _a.seed
+    if _a.pred_path:
+        PRED_PATH = Path(_a.pred_path)
     sys.exit(main())

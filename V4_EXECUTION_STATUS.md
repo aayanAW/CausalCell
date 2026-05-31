@@ -128,3 +128,34 @@ See `submissions/USER_ACTIONS.md` for full detail.
 **Engineering:**
 - v2.15: messy scripts, no Docker, no Makefile, no PyPI prep.
 - v4: pyproject.toml, Dockerfile, Makefile, INSTALL.md, README.md, CITATION.cff, MIT LICENSE, fork→spawn fixed.
+
+---
+
+## Phase 2/3 Un-Deferral Attempt (2026-05-30) — PARTIAL, blocked on Modal spend cap
+
+**Hard external blocker:** `App creation failed: workspace billing cycle spend limit reached`. After the first deep-model job completed, the Modal workspace hit its billing-cycle spend cap; no further Modal compute can launch until the limit is raised or the cycle resets. This blocks 5 of 6 Phase-2 deep-model jobs + STATE multi-seed.
+
+### Infrastructure built + validated (no longer deferred)
+- **RPE1 data restored** from scPerturb (Zenodo 13350497) → Modal volume + local slim `data/rpe1_subset_n200_slim.h5ad` (196 canonical genes). `scripts/modal_fetch_rpe1.py`.
+- **Norman slim** `data/norman_subset_n200_slim.h5ad` (8028 genes, 102 single-gene CRISPRa perts). `scripts/modal_prep_norman.py`.
+- **3 deep-model runners parameterized** (`modal_run_{gears,cpa,geneformer}_real.py`): DATASETS registry {k562,norman,rpe1}, gene-list, single_gene_only. K562 defaults unchanged.
+- **CPA dependency stack fixed + VALIDATED** (CPA RPE1 trained to epoch 70+, val_r2=0.72 before preemption): meta-path jax-ecosystem mock (`scripts/_create_mocks.py`) + real `pytorch-lightning==1.9.5` pin (scvi is a PL 1.x lib).
+- **`run_eval_local.py`**: `--pert-col` + N(0,1e-6) GIES jitter (fixes Norman zero-variance hang).
+- **`.remote()`→`.spawn()`** in all 3 entrypoints (Modal detach-safety).
+- **STATE multiseed** scripts parameterized (`--n-cells-per-pert`, `--seed`).
+
+### Results obtained (before the spend cap)
+- **Norman cross-paradigm (CRISPRa), N=102, real-data GIES = 209 edges:**
+  - CPA (deep) F1 = **0.182** [0.158, 0.208]; ElasticNet 0.192; Overlay-real 0.226; **Random 0.180**; GRNBoost2 0.080.
+  - **Finding:** a trained deep VCM (CPA) recovers no more of the real causal graph than chance in the cross-paradigm setting — extends the K562 substitutability-gap thesis to CRISPRa. CPA over-predicts (640 vs 209 edges; consistent with inflation).
+  - `results/phase2_eval_norman.json`
+- **RPE1 cross-context (CRISPRi), N=196, real-data GIES = 1137 edges (dense):**
+  - ElasticNet 0.340; Overlay 0.325; Random 0.348; GRNBoost2 0.075. Baselines ≈ random (dense GT → low discriminative power). Deep models BLOCKED (no predictions).
+  - `results/phase2_eval_rpe1.json`
+- Cross-dataset summary: `results/phase2_cross_dataset_summary.json`.
+
+### Still BLOCKED on Modal spend cap (to finish for 100%)
+- GEARS (rpe1, norman), CPA (rpe1), Geneformer (rpe1, norman) deep-model predictions.
+- STATE multi-seed (3 seeds) — also needs a `triton_key` import fix in the embedding image.
+- Phase 6 Geneformer contamination (needs Geneformer K562-vs-RPE1).
+- **To resume:** raise the Modal spend limit, then `bash scripts/v4/run_phase2_serial.sh` (runs the 5 jobs ONE AT A TIME to avoid the GPU-capacity thrash seen with 6 concurrent), then `bash scripts/v4/download_phase2_predictions.sh` + `bash scripts/v4/phase_2_eval.sh` + `python3 scripts/v4/phase_2_aggregate.py`.
