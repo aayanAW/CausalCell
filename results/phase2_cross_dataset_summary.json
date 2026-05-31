@@ -17,30 +17,30 @@
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "cpa",
-      "f1": 0.360483,
+      "f1": 0.361146,
       "ub": 1.0,
-      "gap": 0.639517
+      "gap": 0.638854
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "elastic_net",
-      "f1": 0.339689,
+      "f1": 0.339419,
       "ub": 1.0,
-      "gap": 0.660311
+      "gap": 0.660581
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "overlay_resampled_real",
-      "f1": 0.324995,
+      "f1": 0.324671,
       "ub": 1.0,
-      "gap": 0.6750050000000001
+      "gap": 0.6753290000000001
     },
     {
       "dataset": "RPE1 (cross-context, CRISPRi)",
       "model": "random",
-      "f1": 0.348063,
+      "f1": 0.348786,
       "ub": 1.0,
-      "gap": 0.651937
+      "gap": 0.651214
     },
     {
       "dataset": "Norman (cross-paradigm, CRISPRa)",

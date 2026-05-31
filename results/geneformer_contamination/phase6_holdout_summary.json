@@ -1,0 +1,13 @@
+{
+  "rows": [
+    {
+      "model": "elastic_net",
+      "type": "from-scratch",
+      "f1_k562": 0.422948,
+      "f1_rpe1": 0.436989,
+      "drop": -0.014041000000000026
+    }
+  ],
+  "verdict": null,
+  "caveat": "Geneformer prediction is a similarity-heuristic overlay, not learned ISP expression; signal is confounded."
+}
