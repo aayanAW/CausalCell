@@ -92,7 +92,7 @@ image = (
 @app.function(
     image=image,
     cpu=16,
-    timeout=21600,  # 6 hours
+    timeout=43200,  # 12h for 1200-cell SE-600M embed (~9.3h at 28s/cell)
     volumes={"/data": vol},
     memory=131072,  # 128 GB to head off OOM kills (SE-600M peak with state pkg overhead unknown)
 )
@@ -303,7 +303,8 @@ def run_state_infer(n_cells_per_pert: int = 1, n_ctrl_keep: int = 120, seed: int
     print(f"  embedded h5ad: {os.path.getsize(pre_emb) / 1e6:.1f} MB")
 
     # STAGE 2: STATE inference using the X_state embeddings.
-    out_path = f"/data/results/model_outputs_real_n200_state/state_predictions_seed{seed}.h5ad"
+    _tag = f"seed{seed}" if n_cells_per_pert == 1 else f"seed{seed}_n{n_cells_per_pert}"
+    out_path = f"/data/results/model_outputs_real_n200_state/state_predictions_{_tag}.h5ad"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     cmd_infer = ["state", "tx", "infer",
@@ -335,7 +336,7 @@ def run_state_infer(n_cells_per_pert: int = 1, n_ctrl_keep: int = 120, seed: int
 @app.function(
     image=image,
     cpu=16,
-    timeout=21600,  # 6 hours; must be >= run_state_infer's timeout, since
+    timeout=43200,  # 12h; >= run_state_infer (1200-cell embed ~9.3h)
                     # .local() runs inside this container.
     volumes={"/data": vol},
     memory=131072,
