@@ -1,0 +1,15 @@
+{
+  "real_n_edges": 1220,
+  "n_eval_genes": 200,
+  "n_predictions": 200,
+  "seed": 456,
+  "partition_size": 20,
+  "state": {
+    "n_edges": 1066,
+    "f1": 0.05074365704286964,
+    "precision": 0.054409005628517824,
+    "recall": 0.047540983606557376,
+    "tp": 58,
+    "wall_time_s": 79.99541187286377
+  }
+}
