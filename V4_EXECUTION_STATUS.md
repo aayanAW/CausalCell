@@ -201,3 +201,11 @@ GEARS + CPA both retrained on RPE1 + Norman and evaluated through GIES. Full cro
 **Deliberately omitted:** Geneformer on RPE1/Norman (its "prediction" is a cosine-similarity heuristic over the control mean, not learned ISP — would not be a real trained-model test). Phase 6 clean contamination test needs a corpus-excluded held-out atlas that does not exist.
 
 Manuscript fully updated (scope table, RPE1 §, Norman §, STATE multi-seed §, limitations, intro, conclusion); PDF rebuilt (238 KiB). **Project at full honest scope.**
+
+---
+
+## STATE 1200-cell confirmation (2026-05-31, final)
+
+Ran STATE multi-seed at 1200 cells (5/pert + 200 ctrl, 12h timeout) to test whether the wide 320-cell CI was a low-sample artifact. It is NOT: per-seed F1 [0.462, 0.041, 0.048] (vs 320-cell [0.462, 0.040, 0.051]), mean 0.184, CI [-0.089, 0.457] — essentially identical. STATE's seed-42 advantage is genuinely non-robust, not undersampling. Manuscript STATE §, scope table, and appendix updated; PDF rebuilt. Freed disk (deleted regenerable gears_cache + scgpt_cache).
+
+**PROJECT FULLY COMPLETE** at honest scope: GEARS+CPA on K562/RPE1/Norman (all ≈ chance), STATE multi-seed at two cell counts (non-robust), Geneformer-on-new omitted (heuristic), manuscript + PDF current. Remaining = user actions (git push, bioRxiv, submission).
