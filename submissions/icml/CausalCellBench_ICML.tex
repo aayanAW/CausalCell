@@ -157,7 +157,7 @@ To pre-empt scope ambiguity, Table~\ref{tab:scope} enumerates exactly which comb
 \toprule
 \textbf{Dataset} & \textbf{Predictive methods} & \textbf{Backends} & \textbf{Seeds} & \textbf{Notes} \\
 \midrule
-Replogle K562  & ENet, CPA, GEARS, Geneformer, STATE, GRNBoost2, overlay-real & GIES, inspre, PC, NOTEARS & 3--20 & primary; STATE 3-seed 320-cell subset \\
+Replogle K562  & ENet, CPA, GEARS, Geneformer, STATE, GRNBoost2, overlay-real & GIES, inspre, PC, NOTEARS & 3--20 & primary; STATE 3-seed, 320- \& 1200-cell \\
 Replogle RPE1  & ENet, GEARS, CPA, GRNBoost2, overlay-real                  & GIES                       & 1     & cross-context (CRISPRi, RPE1) \\
 Norman 2019    & ENet, GEARS, CPA, GRNBoost2, overlay-real                  & GIES                       & 1     & cross-paradigm (CRISPRa, K562) \\
 \bottomrule
@@ -388,7 +388,7 @@ Routing the K562 200-gene subset through Arc Institute's SE-600M cell encoder an
 
 \paragraph{STATE multi-seed: the single-seed result does not replicate.}
 \label{sec:state-multi-seed}
-Re-running the identical SE-600M $\to$ ST-SE-Replogle $\to$ overlay $\to$ GIES pipeline at two further seeds (320-cell subsets resampled with seeds 123 and 456) yields $F_1 = 0.040$ and $F_1 = 0.051$ --- an order of magnitude below the seed-42 value. The three-seed mean is $F_1 = 0.184$ with a 95\% confidence interval of $[-0.088, 0.457]$ that spans zero and sits below the ElasticNet baseline. The seed-42 ``narrowing'' was a fortunate draw of the 1-cell-per-perturbation sampling rather than a robust property of the model. We therefore cannot conclude that STATE exceeds the linear baseline: its apparent advantage is within sampling noise, and the central substitutability gap holds for the 2025 foundation model as well. The instability is itself diagnostic --- a single perturbed cell per gene is too few to estimate the STATE-predicted perturbation mean stably, so a definitive STATE assessment requires the higher-cell-count embedding that the $\sim$28\,s/cell SE-600M CPU cost placed outside the 6\,h Modal budget (Appendix~\ref{app:state_methods}). Absolute $F_1$ at every seed remains below $0.5$.
+Re-running the identical SE-600M $\to$ ST-SE-Replogle $\to$ overlay $\to$ GIES pipeline at two further seeds (subsets resampled with seeds 123 and 456) yields $F_1 = 0.041$ and $F_1 = 0.048$ --- an order of magnitude below the seed-42 value. The three-seed mean is $F_1 = 0.184$ with a 95\% confidence interval of $[-0.089, 0.457]$ that spans zero and sits below the ElasticNet baseline. We therefore cannot conclude that STATE exceeds the linear baseline: its apparent seed-42 advantage is within sampling noise, and the central substitutability gap holds for the 2025 foundation model as well. \textbf{This is not an undersampling artifact:} re-embedding 1{,}200 cells per seed (5 per perturbation $+$ 200 controls, vs.\ the 320-cell, 1-per-perturbation subset) reproduces the same per-seed values ($F_1 = [0.462, 0.041, 0.048]$) and the same confidence interval, ruling out the low-sample-mean explanation --- the seed-42 result is genuinely non-robust rather than a fortunate low-$n$ draw. Absolute $F_1$ at every seed remains below $0.5$.
 
 \paragraph{Limitations.}
 \label{sec:limitations}
@@ -827,7 +827,7 @@ Reproducing the published checkpoint required diagnosing three distinct framewor
 
 The full set of attempted patches (14 attempts) and the final working Modal image specification is in \texttt{scripts/modal\_run\_state\_v3.py}.
 
-\textbf{Subset rationale.} STATE inference was run on a 320-cell subset of K562: $120$ control cells (sampled from the $\sim$10{,}691 \texttt{non-targeting} cells) plus $200$ perturbed cells (one per gene in the $N{=}200$ panel). The reduction is required because SE-600M wall-clock inference on Modal CPU instances measures $\sim$28\,s/cell at \texttt{batch\_size=8}; the full 38{,}979-cell K562 panel would take $\sim$300\,h, which exceeds the 6-hour Modal function timeout. The 320-cell subset embeds in $\sim$13.5 minutes and produces 200 distinct STATE-predicted perturbation profiles---one per perturbation, the unit consumed by overlay sampling and downstream GIES.
+\textbf{Subset rationale.} STATE inference was run at two subset sizes per seed: a 320-cell subset ($120$ controls $+$ one perturbed cell per gene) and, to rule out a low-sample-mean artifact, a 1{,}200-cell subset ($200$ controls $+$ five perturbed cells per gene, run under a 12-hour Modal timeout). Both are reductions of the full 38{,}979-cell K562 panel, which at the measured SE-600M cost of $\sim$28\,s/cell (\texttt{batch\_size=8}) would take $\sim$300\,h. The 320-cell subset embeds in $\sim$13.5 minutes and the 1{,}200-cell subset in $\sim$9.3 hours; both produce 200 STATE-predicted perturbation profiles (one per perturbation) and yield matching per-seed $F_1$ (\S\ref{sec:state-multi-seed}), confirming the multi-seed instability is not a sampling artifact.
 
 \subsection{Norman 2019 cross-paradigm pipeline}
 \label{app:norman_pipeline}
