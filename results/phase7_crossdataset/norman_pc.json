@@ -1,0 +1,49 @@
+{
+  "dataset": "norman",
+  "n_genes": 102,
+  "n_real_perts": 102,
+  "n_perm": 24,
+  "seed": 42,
+  "backend": "pc",
+  "gt_edges": 118,
+  "gt_secs": 2.7,
+  "n_universe": 10302,
+  "conditions": {
+    "gears": {
+      "f1": 0.0149,
+      "precision": 0.0133,
+      "recall": 0.0169,
+      "n_edges": 150,
+      "random_edge_f1": 0.0128,
+      "f1_over_random": 1.17,
+      "secs": 28.1,
+      "within_chance": true
+    },
+    "cpa": {
+      "f1": 0.0444,
+      "precision": 0.0395,
+      "recall": 0.0508,
+      "n_edges": 152,
+      "random_edge_f1": 0.0129,
+      "f1_over_random": 3.45,
+      "secs": 32.1,
+      "within_chance": true
+    },
+    "elastic_net": {
+      "f1": 0.0235,
+      "precision": 0.0385,
+      "recall": 0.0169,
+      "n_edges": 52,
+      "random_edge_f1": 0.007,
+      "f1_over_random": 3.36,
+      "secs": 6.9,
+      "within_chance": true
+    }
+  },
+  "chance_floor": {
+    "mean": 0.0145,
+    "p2.5": 0.0,
+    "p97.5": 0.0468,
+    "n_perm": 24
+  }
+}

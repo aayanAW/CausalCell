@@ -18,6 +18,10 @@ build/
 *.pickle
 *.npy
 
+# Intermediate caches + smoke outputs (regenerable)
+results/phase7_crossdataset/cache/
+results/**/*_smoke.json
+
 # Environment
 environments/
 .env
