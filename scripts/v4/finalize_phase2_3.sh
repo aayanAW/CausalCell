@@ -20,9 +20,9 @@ done
 
 echo "==================== 2. Phase-2 GIES eval (per dataset) ================="
 run_eval () {
-    local ds="$1" data="$2"
+    local ds="$1" data="$2" pert_col="$3"
     [ -f "$data" ] || { echo "  SKIP $ds — no $data"; return; }
-    "$PY" scripts/run_eval_local.py --data-path "$data" --pert-col perturbation \
+    "$PY" scripts/run_eval_local.py --data-path "$data" --pert-col "$pert_col" \
         --gene-list "data/gene_lists/${ds}_genes.txt" --partition-size 20 \
         --n-cells 100 --n-ctrl 200 --seed 42 \
         --model-outputs-dir "data/model_outputs_real_${ds}" \
@@ -30,8 +30,8 @@ run_eval () {
     local latest; latest=$(ls -t results/eval_results_n*.json 2>/dev/null | head -1)
     [ -n "$latest" ] && cp "$latest" "results/phase2_eval_${ds}.json" && echo "  -> phase2_eval_${ds}.json"
 }
-run_eval rpe1   "data/rpe1_subset_n200_slim.h5ad"
-run_eval norman "data/norman_subset_n200_slim.h5ad"
+run_eval rpe1   "data/rpe1_subset_n200_slim.h5ad"   gene
+run_eval norman "data/norman_subset_n200_slim.h5ad" perturbation
 
 echo "==================== 3. Cross-dataset aggregate ========================"
 "$PY" scripts/v4/phase_2_aggregate.py 2>&1 | tail -15
