@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import scipy.stats as sp_stats
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 STATE_DIR = ROOT / "results" / "state"
@@ -36,7 +37,10 @@ def main():
     mean = float(f1s.mean())
     if n >= 2:
         se = float(f1s.std(ddof=1) / np.sqrt(n))
-        lo, hi = mean - 1.96 * se, mean + 1.96 * se
+        # t-distribution critical value, matching run_multi_seed.compute_ci_t for
+        # every other model (small-n: z=1.96 understates the half-width).
+        t_crit = float(sp_stats.t.ppf(0.975, df=n - 1))
+        lo, hi = mean - t_crit * se, mean + t_crit * se
     else:
         lo = hi = mean
     out = {
