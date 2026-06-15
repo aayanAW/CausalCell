@@ -1,0 +1,22 @@
+{
+  "cell_line": "RPE1",
+  "n_genes": 200,
+  "n_eligible": 2069,
+  "n_control_cells": 11485,
+  "n_pert_means": 200,
+  "linearity": {
+    "rank1_variance": 0.3449874818325043,
+    "rank5_variance": 0.684525191783905,
+    "frac_near_zero": 0.1538,
+    "frac_large": 0.172625
+  },
+  "gies": {
+    "real_data_edges": 810,
+    "elastic_net_edges": 810,
+    "elastic_net_precision": 1.0,
+    "elastic_net_tp": 810
+  },
+  "elasticnet_anomaly_replicates": true,
+  "low_rank": false,
+  "sparse": false
+}

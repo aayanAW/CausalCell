@@ -1,0 +1,16 @@
+{
+  "baselines": {
+    "elastic_net_precision": 0.4247135842880524,
+    "geneformer_precision": 0.4320785597381342
+  },
+  "sparse_geneformer": {
+    "threshold": 0.05,
+    "precision": 0.3844566712517194,
+    "n_edges": 1454
+  },
+  "ensemble": {
+    "alpha": 0.8,
+    "precision": 0.4069611780455154,
+    "n_edges": 1494
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "linearity": {
+    "rank1_variance": 0.5684372186660767,
+    "rank5_variance": 0.6978638172149658,
+    "rank10_variance": 0.7443451881408691,
+    "singular_values_top20": [
+      28.554378509521484,
+      10.040308952331543,
+      6.306477069854736,
+      4.885746479034424,
+      4.603958606719971,
+      4.073977470397949,
+      3.716649055480957,
+      3.627056121826172,
+      3.496704339981079,
+      3.2982490062713623,
+      3.2509219646453857,
+      3.2152321338653564,
+      3.0241200923919678,
+      2.9798343181610107,
+      2.8929810523986816,
+      2.8517167568206787,
+      2.762298583984375,
+      2.6997427940368652,
+      2.655531883239746,
+      2.6347875595092773
+    ],
+    "mean_frac_affected_01": 0.357175,
+    "mean_frac_affected_05": 0.027425,
+    "mean_abs_log2fc": 0.11375723779201508,
+    "median_abs_log2fc": 0.06842193007469177,
+    "p95_abs_log2fc": 0.37680763602256745,
+    "cumulative_variance": [
+      0.5684372186660767,
+      0.6387171149253845,
+      0.6664446592330933,
+      0.6830863952636719,
+      0.6978638172149658,
+      0.7094349265098572,
+      0.7190653085708618,
+      0.7282368540763855,
+      0.7367610931396484,
+      0.7443451881408691,
+      0.7517131567001343,
+      0.7589203119277954,
+      0.7652961015701294,
+      0.7714865207672119,
+      0.7773213982582092,
+      0.7829909920692444,
+      0.7883105278015137,
+      0.7933918833732605,
+      0.798308253288269,
+      0.803148090839386
+    ]
+  },
+  "sparsity": {
+    "real": {
+      "gini_coefficient": 0.5482754500345672,
+      "mean_l1_norm": 22.751447677612305,
+      "mean_l2_norm": 2.2154946327209473,
+      "frac_near_zero": 0.386025,
+      "frac_large_effect": 0.027425,
+      "mean_abs_fc": 0.11375723779201508
+    },
+    "gears": {
+      "gini_coefficient": 0.5271122309092582,
+      "mean_l1_norm": 226.8963165283203,
+      "mean_l2_norm": 23.419782638549805,
+      "frac_near_zero": 0.04532663316582915,
+      "frac_large_effect": 0.6320100502512562,
+      "mean_abs_fc": 1.1344815492630005
+    },
+    "cpa": {
+      "gini_coefficient": 0.5279455963257564,
+      "mean_l1_norm": 226.6462860107422,
+      "mean_l2_norm": 23.352846145629883,
+      "frac_near_zero": 0.055425,
+      "frac_large_effect": 0.633575,
+      "mean_abs_fc": 1.1332314014434814
+    },
+    "geneformer": {
+      "gini_coefficient": 0.5283194395618496,
+      "mean_l1_norm": 227.36434936523438,
+      "mean_l2_norm": 23.468339920043945,
+      "frac_near_zero": 0.05349740932642487,
+      "frac_large_effect": 0.6354145077720207,
+      "mean_abs_fc": 1.1368218660354614
+    }
+  },
+  "covariance": {
+    "gears": {
+      "frobenius_distance": 4.275558966321733,
+      "correlation_of_correlations": 0.9674216350148306,
+      "mean_abs_diff": 0.013271237230952578
+    },
+    "cpa": {
+      "frobenius_distance": 1.4986567348701074,
+      "correlation_of_correlations": 0.9960833478390457,
+      "mean_abs_diff": 0.005979285555266691
+    },
+    "geneformer": {
+      "frobenius_distance": 1.6334786334031695,
+      "correlation_of_correlations": 0.9958296483206112,
+      "mean_abs_diff": 0.006544368585951227
+    }
+  },
+  "edge_overlap": {
+    "elastic_net": {
+      "true_positives": 519,
+      "false_positives": 703,
+      "false_negatives": 701,
+      "precision": 0.4247135842880524,
+      "recall": 0.42540983606557375,
+      "unique_false_positives": 133
+    },
+    "gears_real": {
+      "true_positives": 489,
+      "false_positives": 703,
+      "false_negatives": 731,
+      "precision": 0.41023489932885904,
+      "recall": 0.40081967213114755,
+      "unique_false_positives": 136
+    },
+    "cpa_real": {
+      "true_positives": 476,
+      "false_positives": 753,
+      "false_negatives": 744,
+      "precision": 0.387306753458096,
+      "recall": 0.3901639344262295,
+      "unique_false_positives": 150
+    },
+    "geneformer_real": {
+      "true_positives": 528,
+      "false_positives": 694,
+      "false_negatives": 692,
+      "precision": 0.4320785597381342,
+      "recall": 0.43278688524590164,
+      "unique_false_positives": 101
+    },
+    "elasticnet_only": {
+      "total": 192,
+      "true_positives": 59,
+      "frac_tp": 0.3072916666666667
+    }
+  }
+}

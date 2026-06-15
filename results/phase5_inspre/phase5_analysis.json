@@ -1,0 +1,19 @@
+{
+  "finding": "inspre is more discriminating than GIES",
+  "explanation": "inspre operates on the ACE matrix directly. CPA/Geneformer predictions produce ACE matrices with signal too weak for inspre to detect causal structure. This means their predicted perturbation effects do not preserve the average causal effect relationships present in real data.",
+  "inspre_edges": {
+    "real_data": 12280,
+    "elastic_net": 12280,
+    "gears": 6234,
+    "cpa": 0,
+    "geneformer": 0
+  },
+  "gies_edges": {
+    "real_data": 1220,
+    "elastic_net": 1222,
+    "gears": 1192,
+    "cpa": 1229,
+    "geneformer": 1222
+  },
+  "key_insight": "GIES partitioning masks signal differences by forcing all conditions to produce similar edge counts. inspre reveals the true signal gap: ElasticNet perfectly matches real data, GEARS captures half, CPA/Geneformer capture nothing."
+}
