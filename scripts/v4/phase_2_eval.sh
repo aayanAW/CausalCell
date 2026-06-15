@@ -17,7 +17,7 @@ PY="$ROOT/.venv_gears/bin/python"
 [ -x "$PY" ] || PY=python3
 
 run_one () {
-    local ds="$1" data_path="$2"
+    local ds="$1" data_path="$2" pert_col="$3"
     local genes="data/gene_lists/${ds}_genes.txt"
     local outdir="data/model_outputs_real_${ds}"
     echo "=================================================================="
@@ -26,7 +26,7 @@ run_one () {
     if [ ! -f "$genes" ]; then echo "  MISSING gene list $genes"; return 1; fi
     "$PY" scripts/run_eval_local.py \
         --data-path "$data_path" \
-        --pert-col perturbation \
+        --pert-col "$pert_col" \
         --gene-list "$genes" \
         --partition-size 20 \
         --n-cells 100 \
@@ -42,7 +42,8 @@ run_one () {
         && echo "  -> results/phase2_eval_${ds}.json"
 }
 
-run_one rpe1   "data/rpe1_subset_n200_slim.h5ad"
-run_one norman "data/norman_subset_n200_slim.h5ad"
+# RPE1 is Replogle-derived and uses the 'gene' obs column (K562 schema); Norman uses 'perturbation'.
+run_one rpe1   "data/rpe1_subset_n200_slim.h5ad"   gene
+run_one norman "data/norman_subset_n200_slim.h5ad" perturbation
 
 echo "Done. See results/phase2_eval_{rpe1,norman}.json"
