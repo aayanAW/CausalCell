@@ -1,0 +1,53 @@
+# Data files (too large for git)
+data/
+*.h5ad
+*.h5
+*.loom
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Binary results
+*.pkl
+*.pickle
+*.npy
+
+# Environment
+environments/
+.env
+venv/
+env/
+.venv*/
+
+# Internal/private
+.claude/
+circuitdrug/
+submissions/
+HANDOFF_*
+ARCHITECTURE_V2.md
+
+# Cloud infrastructure (not needed for reproduction)
+scripts/modal_*
+scripts/runpod/
+scripts/vastai/
+scripts/_create_mocks.py
+scripts/launch_all_real.sh
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
