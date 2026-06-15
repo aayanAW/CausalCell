@@ -67,19 +67,26 @@ class CalibrationPipeline:
     def _canon(mode: str) -> str:
         return {"q": "quantile", "c": "covariance", "s": "sparsity"}.get(mode, mode)
 
-    def fit(self, *, real_log_fc, real_pert_shifts, pred_log_fc):
+    def fit(self, *, real_log_fc, real_pert_shifts=None, pred_log_fc):
+        # `running` mirrors the cumulative output each mode actually receives at
+        # transform time, so composition-order-dependent modes (sparsity) are fit
+        # on the right distribution rather than the raw predictions.
+        running = np.asarray(pred_log_fc, dtype=np.float64).copy()
         for mode in self.order:
             cmode = self._canon(mode)
             if cmode == "quantile":
                 cal = _Log2FCQuantileMatcher().fit(real_log_fc)
             elif cmode == "covariance":
+                # Fit the covariance basis on real log2FC (not raw count shifts) so
+                # the projection is unit-consistent with the log2FC transform input.
                 cal = CovariancePreservingCalibrator()
-                cal.fit(real_pert_shifts)
+                cal.fit(real_log_fc)
             elif cmode == "sparsity":
                 target = float((np.abs(real_log_fc) < 0.05).mean())
                 cal = SparsityInjectionCalibrator(target_near_zero_frac=target)
-                cal.fit(pred_log_fc)
+                cal.fit(running)
             self.calibrators[mode] = cal
+            running = cal.transform(running)
         return self
 
     def transform(self, x):

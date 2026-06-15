@@ -160,14 +160,15 @@ def main():
                 pred_log_fc_train=pred_log_fc_train,
                 pred_log_fc_test=pred_log_fc_test,
             )
-            # Convert back to raw expression: ctrl_mean * 2^log_fc - eps_correction
-            cal_raw = ctrl_means * (2 ** cal_log_fc_test) - EPS
+            # Exact inverse of log_fc = log2((pred+EPS)/(ctrl+EPS)): pred = (ctrl+EPS)*2^log_fc - EPS
+            cal_raw = (ctrl_means + EPS) * (2 ** cal_log_fc_test) - EPS
             cal_raw = np.maximum(cal_raw, 0.0).astype(np.float32)
-            # Write h5ad (only test perturbations)
+            # Write h5ad (only test perturbations). Label rows with the SURVIVING test
+            # perturbations (those present in predictions), matching test_pred_idx order.
             out_h5 = OUT_DIR / f"{model}_{order_label}_test_predictions.h5ad"
             new_adata = ad.AnnData(X=cal_raw)
             new_adata.var_names = gene_names
-            new_adata.obs["gene"] = [test_perts[i] for i in range(len(test_pred_idx))]
+            new_adata.obs["gene"] = [p for p in test_perts if p in pert_to_pred_idx]
             new_adata.write_h5ad(out_h5)
             sweep["orderings"].append({
                 "model": model,
