@@ -237,7 +237,7 @@ def run_gies(cb_input, seed=0, partition_size=30, n_workers=None):
     n_parts = len(partitions)
     logger.info("    Running %d partitions in parallel (%d workers)", n_parts, n_workers)
 
-    # Force fork context — macOS Python 3.8+ defaults to spawn which breaks pickling
+    # Use spawn context — fork + BLAS threads deadlocks under Modal/Docker (V3 plan P8.2)
     ctx = mp.get_context("spawn")
     pool = ctx.Pool(processes=n_workers)
     try:
