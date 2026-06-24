@@ -1,5 +1,12 @@
 # PerturbCausal → 10/10: Audit + Roadmap
 
+## Update — experiments run 2026-06-23 (Phase E, autoresearch-loop guards)
+
+Two pre-registered/multi-seed experiments run locally; both gave **honest nulls that corrected earlier single-seed claims** (the multi-seed discipline did its job):
+
+- **J2 covariance-regularizer λ-sweep (DISCARD).** Pre-registered grid λ∈{0…100}, val/test split, locked test touched once. Best-validation λ=100 gains only **+0.003 ± 0.035** test F1 over recon-only (3/5 seeds) — fails the multi-seed gate. Confirms the earlier single-λ finding rigorously: the +0.11 J2 gain is the _learned joint map_, not the covariance penalty. (`results/phase4/j2_lambda_sweep.json`, `preregistration_j2_lambda.md`.)
+- **J1 TRRUST multi-seed (NULL — overturns the single-seed claim).** Across 5 seeds the GIES-on-real ground truth recovers TRRUST at **0.83 ± 0.70× chance** (per-seed 0.46/0.69/1.14/1.84/0.00) — _not_ robustly above chance. The seed-42 "2.4× lift" did **not** replicate. So the circularity is **not** closed; it remains an honest open limitation (cell-sampling-dominated at this scale, per the 0.045 tech-dup floor). Paper corrected accordingly. (`results/track_b/j1_trrust_multiseed.json`.)
+
 ## Workflow file read + methods employed (`~/Desktop/claude ultimate workflow/`)
 
 This audit followed the user's "claude ultimate workflow" prompt files, read in full at session start:
