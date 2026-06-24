@@ -1,6 +1,20 @@
 # PerturbCausal → 10/10: Audit + Roadmap
 
-## Execution status (branch `fix/camera-ready-corrections`, 5 commits, all builds green)
+## Workflow file read + methods employed (`~/Desktop/claude ultimate workflow/`)
+
+This audit followed the user's "claude ultimate workflow" prompt files, read in full at session start:
+
+| File                  | What it prescribes                                                                                                                   | How it was employed                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `README.md`           | A→H phase map; cross-model verification; audit-prompt index                                                                          | Used as the orchestration map; ran the two audit prompts below                                                                                                                  |
+| `audit.md`            | Area-chair (ICML/NeurIPS/ICLR) "is the idea a 10/10?" brutal critique                                                                | Applied as the novelty/claim-validity/reviewer-2 lenses in the multi-agent audit                                                                                                |
+| `AUDIT_CrossModel.md` | Whole-repo 6-dimension audit, "built to run as a deterministic multi-agent Workflow" with adversarial cross-verification → synthesis | Ran as a **9-dimension Workflow (18 agents, adversarial verify)**: novelty, claim-validity, stats, repro/code, number-honesty, figures, writing, reviewer-2, computational-gaps |
+| `H_Paper_Writing.md`  | Submission bar: `scientific-writing`, `humanizer`, `peer-review`/`santa-method` self-check agents, citation verification             | Self-check agents (adversarial verify stage); humanizer prose pass (P4); citations web-verified before adding                                                                   |
+| `paper-cowriter.md`   | Model-paper templating; 7 self-check agents; claim–evidence honesty; figure routing                                                  | Number-honesty + figure + claim-evidence dimensions; figures regenerated to camera-ready vector standard                                                                        |
+
+Cross-model (Codex) leg of `AUDIT_CrossModel.md`: not run (codex plugin not invoked this session); the Claude-side multi-agent + adversarial-verify path was used and is noted as the fallback the file permits.
+
+## Execution status (branch `fix/camera-ready-corrections`, 11 commits, all builds green, all tests pass)
 
 **DONE — camera-ready (moves ~5 → ~7):**
 
