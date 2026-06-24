@@ -21,7 +21,6 @@ import os
 import time
 import warnings
 from dataclasses import dataclass
-from pathlib import Path
 
 import anndata as ad
 import numpy as np
@@ -42,6 +41,7 @@ logger = logging.getLogger("eval_pipeline")
 # Negative Binomial Sampling
 # =====================================================================
 
+
 def estimate_nb_dispersion(control_X: np.ndarray, shrinkage: bool = True):
     """Estimate per-gene NB dispersion from control expression matrix.
 
@@ -61,7 +61,7 @@ def estimate_nb_dispersion(control_X: np.ndarray, shrinkage: bool = True):
 
     with np.errstate(divide="ignore", invalid="ignore"):
         overdispersed = var > mu + 1e-8
-        r = np.where(overdispersed, mu ** 2 / (var - mu), 1e4)
+        r = np.where(overdispersed, mu**2 / (var - mu), 1e4)
 
     r = np.clip(r, 0.1, 1e6)
     zero_mean = mu < 1e-8
@@ -84,10 +84,9 @@ def _shrink_dispersion(mu, r_raw, shrinkage_weight=0.5):
         r_trend = np.clip(r_trend, 0.01, 1e6)
     except (np.linalg.LinAlgError, ValueError):
         return r_raw
-    log_r_shrunk = (
-        (1 - shrinkage_weight) * np.log(r_raw + 1e-8)
-        + shrinkage_weight * np.log(r_trend + 1e-8)
-    )
+    log_r_shrunk = (1 - shrinkage_weight) * np.log(
+        r_raw + 1e-8
+    ) + shrinkage_weight * np.log(r_trend + 1e-8)
     return np.exp(log_r_shrunk)
 
 
@@ -109,6 +108,7 @@ def sample_cells_nb(mean_prediction, dispersion_r, n_cells, seed=0):
 # CausalBenchInput
 # =====================================================================
 
+
 @dataclass
 class CausalBenchInput:
     expression_matrix: np.ndarray
@@ -124,12 +124,20 @@ class CausalBenchInput:
 
     def validate(self):
         n_cells, n_genes = self.expression_matrix.shape
-        assert n_cells == len(self.interventions), f"Rows {n_cells} != interventions {len(self.interventions)}"
-        assert n_genes == len(self.gene_names), f"Cols {n_genes} != gene_names {len(self.gene_names)}"
-        assert n_cells == self.total_cells, f"Rows {n_cells} != ctrl+pert {self.total_cells}"
+        assert n_cells == len(self.interventions), (
+            f"Rows {n_cells} != interventions {len(self.interventions)}"
+        )
+        assert n_genes == len(self.gene_names), (
+            f"Cols {n_genes} != gene_names {len(self.gene_names)}"
+        )
+        assert n_cells == self.total_cells, (
+            f"Rows {n_cells} != ctrl+pert {self.total_cells}"
+        )
         n_ctrl = sum(1 for i in self.interventions if i == "non-targeting")
         assert n_ctrl == self.n_control_cells
-        assert np.isfinite(self.expression_matrix).all(), "Non-finite values in expression matrix"
+        assert np.isfinite(self.expression_matrix).all(), (
+            "Non-finite values in expression matrix"
+        )
 
 
 def build_cb_input(ctrl_X, pert_matrices, pert_labels, gene_names):
@@ -137,9 +145,7 @@ def build_cb_input(ctrl_X, pert_matrices, pert_labels, gene_names):
         pert_X = np.concatenate(pert_matrices, axis=0).astype(np.float32)
     else:
         pert_X = np.empty((0, len(gene_names)), dtype=np.float32)
-    expression_matrix = np.concatenate(
-        [ctrl_X.astype(np.float32), pert_X], axis=0
-    )
+    expression_matrix = np.concatenate([ctrl_X.astype(np.float32), pert_X], axis=0)
     interventions = ["non-targeting"] * ctrl_X.shape[0] + pert_labels
     result = CausalBenchInput(
         expression_matrix=expression_matrix,
@@ -157,9 +163,11 @@ def build_cb_input(ctrl_X, pert_matrices, pert_labels, gene_names):
 # GIES Runner
 # =====================================================================
 
+
 def _run_gies_partition(args_tuple):
     """Run GIES on a single partition. Designed for parallel execution."""
     import gies as gies_pkg
+
     p_idx, partition_idx, gene_names, expression_matrix, interventions = args_tuple
 
     partition_genes = [gene_names[i] for i in partition_idx]
@@ -224,18 +232,25 @@ def run_gies(cb_input, seed=0, partition_size=30, n_workers=None):
     rng = np.random.default_rng(seed)
     gene_order = rng.permutation(n_genes)
     partitions = [
-        gene_order[i: i + partition_size]
-        for i in range(0, n_genes, partition_size)
+        gene_order[i : i + partition_size] for i in range(0, n_genes, partition_size)
     ]
 
     # Build args for parallel execution — all numpy/list, fully picklable
     tasks = [
-        (p_idx, partition_idx, gene_names, cb_input.expression_matrix, cb_input.interventions)
+        (
+            p_idx,
+            partition_idx,
+            gene_names,
+            cb_input.expression_matrix,
+            cb_input.interventions,
+        )
         for p_idx, partition_idx in enumerate(partitions)
     ]
 
     n_parts = len(partitions)
-    logger.info("    Running %d partitions in parallel (%d workers)", n_parts, n_workers)
+    logger.info(
+        "    Running %d partitions in parallel (%d workers)", n_parts, n_workers
+    )
 
     # Use spawn context — fork + BLAS threads deadlocks under Modal/Docker (V3 plan P8.2)
     ctx = mp.get_context("spawn")
@@ -260,6 +275,7 @@ def run_gies(cb_input, seed=0, partition_size=30, n_workers=None):
 # GRNBoost2 Runner (observational)
 # =====================================================================
 
+
 def run_grnboost(cb_input, n_top=None):
     """Run GRNBoost2 — ignores intervention structure, uses all cells.
 
@@ -269,8 +285,10 @@ def run_grnboost(cb_input, n_top=None):
     See: https://github.com/aertslab/arboreto/issues/42
     """
     from arboreto.core import (
-        SGBM_KWARGS, EARLY_STOP_WINDOW_LENGTH,
-        to_tf_matrix, infer_partial_network,
+        SGBM_KWARGS,
+        EARLY_STOP_WINDOW_LENGTH,
+        to_tf_matrix,
+        infer_partial_network,
     )
 
     expression_matrix = cb_input.expression_matrix
@@ -279,7 +297,9 @@ def run_grnboost(cb_input, n_top=None):
     n_obs, n_genes = expression_matrix.shape
     logger.info("    GRNBoost2: %d cells x %d genes (dask-free)...", n_obs, n_genes)
 
-    tf_matrix, tf_matrix_gene_names = to_tf_matrix(expression_matrix, gene_names, tf_names)
+    tf_matrix, tf_matrix_gene_names = to_tf_matrix(
+        expression_matrix, gene_names, tf_names
+    )
 
     link_dfs = []
     for target_idx in range(n_genes):
@@ -287,7 +307,7 @@ def run_grnboost(cb_input, n_top=None):
         target_gene_expression = expression_matrix[:, target_idx]
 
         link_df = infer_partial_network(
-            regressor_type='GBM',
+            regressor_type="GBM",
             regressor_kwargs=SGBM_KWARGS,
             tf_matrix=tf_matrix,
             tf_matrix_gene_names=tf_matrix_gene_names,
@@ -304,7 +324,7 @@ def run_grnboost(cb_input, n_top=None):
         return []
 
     network = pd.concat(link_dfs, ignore_index=True)
-    network = network.sort_values(by='importance', ascending=False)
+    network = network.sort_values(by="importance", ascending=False)
 
     edges = [
         (row["TF"], row["target"])
@@ -320,8 +340,10 @@ def run_grnboost(cb_input, n_top=None):
 # Evaluation Metrics
 # =====================================================================
 
-def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
-                        edge_weights=None, seed: int = 0) -> dict:
+
+def compute_set_metrics(
+    predicted_edges, ground_truth_edges, all_genes, edge_weights=None, seed: int = 0
+) -> dict:
     """Compute F1, Precision, Recall, and AUPRC for predicted vs ground truth edges.
 
     Primary metrics (set-based, no confidence scores needed):
@@ -345,14 +367,26 @@ def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
     n_gt = len(gt_set)
 
     if n_pred == 0:
-        return {"f1": 0.0, "precision": 0.0, "recall": 0.0,
-                "auprc": 0.0, "auprc_topk": 0.0, "precision_at_100": 0.0,
-                "n_predicted": 0, "n_ground_truth": n_gt, "n_true_positive": 0}
+        return {
+            "f1": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "auprc": 0.0,
+            "auprc_topk": 0.0,
+            "precision_at_100": 0.0,
+            "n_predicted": 0,
+            "n_ground_truth": n_gt,
+            "n_true_positive": 0,
+        }
 
     tp = len(pred_set & gt_set)
     precision = tp / n_pred if n_pred > 0 else 0.0
     recall = tp / n_gt if n_gt > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
 
     # --- Top-k AUPRC: sweep k to build a proper PR curve ---
     # For unweighted edge sets, vary the number of predicted edges considered
@@ -384,7 +418,11 @@ def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
     order = np.argsort(recalls_topk)
     recalls_sorted = np.array(recalls_topk)[order]
     precs_sorted = np.array(precisions_topk)[order]
-    auprc_topk = float(np.trapz(precs_sorted, recalls_sorted)) if len(recalls_sorted) > 1 else precision
+    auprc_topk = (
+        float(np.trapz(precs_sorted, recalls_sorted))
+        if len(recalls_sorted) > 1
+        else precision
+    )
 
     # --- Legacy shuffled AUPRC (for backward compatibility) ---
     y_true = np.array([1 if e in gt_set else 0 for e in predicted_list])
@@ -392,10 +430,16 @@ def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
         y_score = np.array([edge_weights.get(e, 0.0) for e in predicted_list])
     else:
         y_score = np.linspace(1.0, 0.0, len(predicted_list))
-    auprc_legacy = float(average_precision_score(y_true, y_score)) if y_true.sum() > 0 else 0.0
+    auprc_legacy = (
+        float(average_precision_score(y_true, y_score)) if y_true.sum() > 0 else 0.0
+    )
 
     # --- Precision@100 ---
-    p100 = float(y_true[:min(100, len(y_true))].sum() / min(100, len(y_true))) if len(y_true) > 0 else 0.0
+    p100 = (
+        float(y_true[: min(100, len(y_true))].sum() / min(100, len(y_true)))
+        if len(y_true) > 0
+        else 0.0
+    )
 
     return {
         "f1": round(f1, 6),
@@ -411,9 +455,13 @@ def compute_set_metrics(predicted_edges, ground_truth_edges, all_genes,
 
 
 # Backward-compatible alias
-def compute_auprc(predicted_edges, ground_truth_edges, all_genes, edge_weights=None, seed=0):
+def compute_auprc(
+    predicted_edges, ground_truth_edges, all_genes, edge_weights=None, seed=0
+):
     """Legacy wrapper — calls compute_set_metrics and returns compatible dict."""
-    return compute_set_metrics(predicted_edges, ground_truth_edges, all_genes, edge_weights, seed)
+    return compute_set_metrics(
+        predicted_edges, ground_truth_edges, all_genes, edge_weights, seed
+    )
 
 
 def compute_random_auprc(ground_truth_edges, all_genes, n_samples=50, seed=0):
@@ -424,7 +472,9 @@ def compute_random_auprc(ground_truth_edges, all_genes, n_samples=50, seed=0):
     for _ in range(n_samples):
         sources = rng.integers(0, len(all_genes), size=1000)
         targets = rng.integers(0, len(all_genes), size=1000)
-        edges = [(all_genes[s], all_genes[t]) for s, t in zip(sources, targets) if s != t]
+        edges = [
+            (all_genes[s], all_genes[t]) for s, t in zip(sources, targets) if s != t
+        ]
         r = compute_auprc(edges, ground_truth_edges, all_genes)
         auprcs.append(r["auprc"])
     return float(np.mean(auprcs))
@@ -440,14 +490,23 @@ def precision_at_k(predicted_edges, ground_truth_edges, k):
 def structural_hamming_distance(predicted_edges, ground_truth_edges):
     pred_set = set(predicted_edges)
     gt_set = set(ground_truth_edges)
-    reversed_edges = {(s, t) for s, t in pred_set if (t, s) in gt_set and (s, t) not in gt_set}
+    reversed_edges = {
+        (s, t) for s, t in pred_set if (t, s) in gt_set and (s, t) not in gt_set
+    }
     missing = gt_set - pred_set - {(t, s) for s, t in reversed_edges}
     extra = pred_set - gt_set - reversed_edges
     shd = len(missing) + len(extra) + len(reversed_edges)
-    return {"shd": shd, "missing": len(missing), "extra": len(extra), "reversed": len(reversed_edges)}
+    return {
+        "shd": shd,
+        "missing": len(missing),
+        "extra": len(extra),
+        "reversed": len(reversed_edges),
+    }
 
 
-def mean_wasserstein_distance(predicted_edges, expression_matrix, interventions, gene_names, max_edges=500):
+def mean_wasserstein_distance(
+    predicted_edges, expression_matrix, interventions, gene_names, max_edges=500
+):
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     ctrl_idx = [i for i, v in enumerate(interventions) if v == "non-targeting"]
     pert_groups = {}
@@ -469,11 +528,15 @@ def mean_wasserstein_distance(predicted_edges, expression_matrix, interventions,
 
     if not distances:
         return {"mean_wasserstein": 0.0, "n_evaluated": 0}
-    return {"mean_wasserstein": float(np.mean(distances)), "n_evaluated": len(distances)}
+    return {
+        "mean_wasserstein": float(np.mean(distances)),
+        "n_evaluated": len(distances),
+    }
 
 
-def false_omission_rate(predicted_edges, expression_matrix, interventions,
-                        gene_names, alpha: float = 0.05) -> dict:
+def false_omission_rate(
+    predicted_edges, expression_matrix, interventions, gene_names, alpha: float = 0.05
+) -> dict:
     """Compute False Omission Rate with GLOBAL Benjamini-Hochberg correction.
 
     FOR = fraction of non-predicted edges that show significant differential
@@ -485,7 +548,9 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions,
     """
     predicted_set = set(predicted_edges)
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
-    ctrl_idx = np.array([i for i, v in enumerate(interventions) if v == "non-targeting"])
+    ctrl_idx = np.array(
+        [i for i, v in enumerate(interventions) if v == "non-targeting"]
+    )
     pert_groups = {}
     for i, v in enumerate(interventions):
         if v != "non-targeting":
@@ -532,15 +597,20 @@ def false_omission_rate(predicted_edges, expression_matrix, interventions,
         # BH: find the largest k such that p_(k) <= alpha * k / n
         max_k = np.max(np.where(below)[0])
         # All tests with rank <= max_k are significant
-        significant_idx = sorted_idx[:max_k + 1]
+        significant_idx = sorted_idx[: max_k + 1]
         n_false_omissions = len(significant_idx)
 
-    return {"for_rate": n_false_omissions / n, "n_false_omissions": n_false_omissions, "n_tested": n}
+    return {
+        "for_rate": n_false_omissions / n,
+        "n_false_omissions": n_false_omissions,
+        "n_tested": n,
+    }
 
 
 # =====================================================================
 # Perturbation Cell Sampling (covariance-preserving)
 # =====================================================================
+
 
 def sample_perturbed_cells_overlay(ctrl_X, mean_pred, n_cells, seed=0):
     """Generate perturbed cells by overlaying fold-changes on control cells.
@@ -585,8 +655,10 @@ def sample_perturbed_cells_overlay(ctrl_X, mean_pred, n_cells, seed=0):
 # Real Model Output Loading
 # =====================================================================
 
-def load_real_model_predictions(model_outputs_dir, model_name, gene_subset, ctrl_X,
-                                 n_cells, seed=0):
+
+def load_real_model_predictions(
+    model_outputs_dir, model_name, gene_subset, ctrl_X, n_cells, seed=0
+):
     """Load real model predictions from .h5ad and prepare for GIES evaluation.
 
     Handles two output types:
@@ -609,7 +681,9 @@ def load_real_model_predictions(model_outputs_dir, model_name, gene_subset, ctrl
     # Build gene name → index mapping for the gene_subset
     pred_var = list(pred_adata.var_names)
     pred_var_to_idx = {g: i for i, g in enumerate(pred_var)}  # O(1) lookup
-    pred_var_upper = {g.upper(): i for i, g in enumerate(pred_var)}  # case-insensitive fallback
+    pred_var_upper = {
+        g.upper(): i for i, g in enumerate(pred_var)
+    }  # case-insensitive fallback
     gene_idx_map = {}
     for g in gene_subset:
         if g in pred_var_to_idx:
@@ -618,8 +692,12 @@ def load_real_model_predictions(model_outputs_dir, model_name, gene_subset, ctrl
             gene_idx_map[g] = pred_var_upper[g.upper()]
 
     if len(gene_idx_map) < len(gene_subset) * 0.5:
-        logger.warning("    Only %d/%d genes matched in %s — skipping",
-                       len(gene_idx_map), len(gene_subset), model_name)
+        logger.warning(
+            "    Only %d/%d genes matched in %s — skipping",
+            len(gene_idx_map),
+            len(gene_subset),
+            model_name,
+        )
         return None, None
 
     logger.info("    Gene overlap: %d/%d", len(gene_idx_map), len(gene_subset))
@@ -704,7 +782,9 @@ def load_real_model_predictions(model_outputs_dir, model_name, gene_subset, ctrl
                 mean_pred[nan_mask] = ctrl_X[:, nan_mask].mean(axis=0)
             # Overlay sample from means
             gene_seed = seed + int(hashlib.md5(gene.encode()).hexdigest()[:8], 16)
-            sampled = sample_perturbed_cells_overlay(ctrl_X, mean_pred, n_cells, seed=gene_seed)
+            sampled = sample_perturbed_cells_overlay(
+                ctrl_X, mean_pred, n_cells, seed=gene_seed
+            )
             pert_matrices.append(sampled)
             pert_labels.extend([gene] * n_cells)
 
@@ -712,14 +792,18 @@ def load_real_model_predictions(model_outputs_dir, model_name, gene_subset, ctrl
         logger.warning("    No perturbations matched for %s", model_name)
         return None, None
 
-    logger.info("    Loaded %d perturbations, %d total cells",
-                len(pert_matrices), sum(m.shape[0] for m in pert_matrices))
+    logger.info(
+        "    Loaded %d perturbations, %d total cells",
+        len(pert_matrices),
+        sum(m.shape[0] for m in pert_matrices),
+    )
     return pert_matrices, pert_labels
 
 
 # =====================================================================
 # Baselines and Model Stubs
 # =====================================================================
+
 
 def run_elasticnet_baseline(ctrl_X_train, ctrl_X_sample, gene_subset, n_cells, seed=0):
     """Train ElasticNet on controls, predict perturbation means, overlay-sample.
@@ -748,10 +832,15 @@ def run_elasticnet_baseline(ctrl_X_train, ctrl_X_sample, gene_subset, n_cells, s
             if t_idx == g_idx:
                 continue
             feature_idx = [i for i in range(n_genes) if i != t_idx]
-            mean_pred[t_idx] = max(float(enet_model.predict(input_state[feature_idx].reshape(1, -1))[0]), 0.0)
+            mean_pred[t_idx] = max(
+                float(enet_model.predict(input_state[feature_idx].reshape(1, -1))[0]),
+                0.0,
+            )
 
         gene_seed = seed + int(hashlib.md5(gene.encode()).hexdigest()[:8], 16)
-        sampled = sample_perturbed_cells_overlay(ctrl_X_sample, mean_pred, n_cells, seed=gene_seed)
+        sampled = sample_perturbed_cells_overlay(
+            ctrl_X_sample, mean_pred, n_cells, seed=gene_seed
+        )
         pert_matrices.append(sampled)
         pert_labels.extend([gene] * n_cells)
 
@@ -775,9 +864,18 @@ def run_random_baseline(ctrl_X, gene_subset, n_cells, seed=0):
     return pert_matrices, pert_labels
 
 
-def run_model_stub(ctrl_X_train, ctrl_X_sample, gene_subset, n_cells,
-                   model_name, knockdown_factor=0.1, noise_scale=0.0,
-                   downstream_frac=0.0, downstream_strength=0.0, seed=0):
+def run_model_stub(
+    ctrl_X_train,
+    ctrl_X_sample,
+    gene_subset,
+    n_cells,
+    model_name,
+    knockdown_factor=0.1,
+    noise_scale=0.0,
+    downstream_frac=0.0,
+    downstream_strength=0.0,
+    seed=0,
+):
     """Differentiated model stub with covariance-preserving overlay sampling.
 
     Parameters
@@ -827,7 +925,9 @@ def run_model_stub(ctrl_X_train, ctrl_X_sample, gene_subset, n_cells,
         # Overlay sampling: preserves control covariance structure
         # Uses ctrl_X_sample (subsampled) so bootstrap base matches GIES controls
         gene_seed = seed + int(hashlib.md5(gene.encode()).hexdigest()[:8], 16)
-        sampled = sample_perturbed_cells_overlay(ctrl_X_sample, mean_pred, n_cells, seed=gene_seed)
+        sampled = sample_perturbed_cells_overlay(
+            ctrl_X_sample, mean_pred, n_cells, seed=gene_seed
+        )
         pert_matrices.append(sampled)
         pert_labels.extend([gene] * n_cells)
 
@@ -840,14 +940,34 @@ def run_model_stub(ctrl_X_train, ctrl_X_sample, gene_subset, n_cells,
 # - scGPT: transformer masking → some downstream via attention
 # - Geneformer: rank-value encoding → weakest downstream (embedding-based)
 MODEL_CONFIGS = {
-    "cpa":        {"knockdown_factor": 0.10, "noise_scale": 0.02,
-                   "downstream_frac": 0.15, "downstream_strength": 0.4, "seed": 100},
-    "gears":      {"knockdown_factor": 0.10, "noise_scale": 0.03,
-                   "downstream_frac": 0.25, "downstream_strength": 0.6, "seed": 200},
-    "scgpt":      {"knockdown_factor": 0.05, "noise_scale": 0.03,
-                   "downstream_frac": 0.10, "downstream_strength": 0.3, "seed": 300},
-    "geneformer": {"knockdown_factor": 0.15, "noise_scale": 0.04,
-                   "downstream_frac": 0.05, "downstream_strength": 0.2, "seed": 400},
+    "cpa": {
+        "knockdown_factor": 0.10,
+        "noise_scale": 0.02,
+        "downstream_frac": 0.15,
+        "downstream_strength": 0.4,
+        "seed": 100,
+    },
+    "gears": {
+        "knockdown_factor": 0.10,
+        "noise_scale": 0.03,
+        "downstream_frac": 0.25,
+        "downstream_strength": 0.6,
+        "seed": 200,
+    },
+    "scgpt": {
+        "knockdown_factor": 0.05,
+        "noise_scale": 0.03,
+        "downstream_frac": 0.10,
+        "downstream_strength": 0.3,
+        "seed": 300,
+    },
+    "geneformer": {
+        "knockdown_factor": 0.15,
+        "noise_scale": 0.04,
+        "downstream_frac": 0.05,
+        "downstream_strength": 0.2,
+        "seed": 400,
+    },
 }
 
 
@@ -855,9 +975,14 @@ MODEL_CONFIGS = {
 # Prediction Accuracy Metrics
 # =====================================================================
 
-def compute_prediction_accuracy(model_pert_matrices: list, model_pert_labels: list,
-                                real_pert_matrices: list, real_pert_labels: list,
-                                gene_subset: list) -> dict:
+
+def compute_prediction_accuracy(
+    model_pert_matrices: list,
+    model_pert_labels: list,
+    real_pert_matrices: list,
+    real_pert_labels: list,
+    gene_subset: list,
+) -> dict:
     """Compare model predictions to real perturbation means.
 
     Computes MSE, Pearson r, and cosine similarity between predicted and
@@ -893,8 +1018,12 @@ def compute_prediction_accuracy(model_pert_matrices: list, model_pert_labels: li
     # Compute metrics over shared genes
     shared = sorted(set(real_by_gene) & set(model_by_gene))
     if len(shared) < 2:
-        return {"mse": float("nan"), "pearson_r": float("nan"),
-                "cosine_sim": float("nan"), "n_genes_compared": len(shared)}
+        return {
+            "mse": float("nan"),
+            "pearson_r": float("nan"),
+            "cosine_sim": float("nan"),
+            "n_genes_compared": len(shared),
+        }
 
     real_vecs = np.array([real_by_gene[g] for g in shared])
     model_vecs = np.array([model_by_gene[g] for g in shared])
@@ -926,9 +1055,15 @@ def compute_prediction_accuracy(model_pert_matrices: list, model_pert_labels: li
 # Bootstrap Confidence Intervals
 # =====================================================================
 
-def bootstrap_evaluate(edges_list: list, gt_edges: set, gene_subset: list,
-                       n_bootstrap: int = 200, seed: int = 0,
-                       confidence: float = 0.95) -> dict:
+
+def bootstrap_evaluate(
+    edges_list: list,
+    gt_edges: set,
+    gene_subset: list,
+    n_bootstrap: int = 200,
+    seed: int = 0,
+    confidence: float = 0.95,
+) -> dict:
     """Compute bootstrap 95% CIs for set-based metrics.
 
     Resamples predicted edges (with replacement) and computes metrics
@@ -977,14 +1112,37 @@ def bootstrap_evaluate(edges_list: list, gt_edges: set, gene_subset: list,
     return result
 
 
-def pairwise_permutation_test(edges_a: list, edges_b: list, gt_edges: set,
-                              gene_subset: list, n_perm: int = 1000,
-                              seed: int = 0) -> dict:
-    """Paired permutation test: is condition A significantly better than B?
+def pairwise_permutation_test(
+    edges_a: list,
+    edges_b: list,
+    gt_edges: set,
+    gene_subset: list,
+    n_perm: int = 1000,
+    seed: int = 0,
+) -> dict:
+    """DEPRECATED / STATISTICALLY INVALID for single-seed edge sets.
 
-    Randomly swaps edges between A and B, computes F1 difference.
-    P-value = fraction of permutations where shuffled difference >= observed.
+    This pools edges_a ∪ edges_b and repartitions the union, which tests
+    "is a given edge assigned to A vs B" under reshuffling of two FIXED edge
+    sets — NOT "does predictor A recover the ground truth better than B".
+    On single-seed inputs the observed difference is compared against a null
+    built from the same two fixed sets, so it returns p ≈ 1.0 and cannot
+    reject anything. It must NOT be used for any reported significance claim.
+
+    The valid pairwise test is the paired sign-flip permutation ACROSS SEEDS
+    in scripts/run_multi_seed.py (used for all K562 multi-seed p-values). For
+    a single-seed cross-dataset comparison, bootstrap over cells/perturbations
+    instead, or report point estimates against the permutation chance band
+    only (the manuscript treats single-seed cells as suggestive, not
+    significant).
     """
+    warnings.warn(
+        "pairwise_permutation_test pools A∪B and is invalid for single-seed "
+        "edge sets (returns p≈1.0); do not cite its p-value. Use the "
+        "across-seed paired sign-flip test in run_multi_seed.py.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
     rng = np.random.default_rng(seed)
 
     m_a = compute_set_metrics(edges_a, gt_edges, gene_subset)
@@ -1009,7 +1167,8 @@ def pairwise_permutation_test(edges_a: list, edges_b: list, gt_edges: set,
     p_value = float(np.mean(np.abs(perm_diffs) >= abs(observed_diff)))
 
     return {
-        "f1_a": m_a["f1"], "f1_b": m_b["f1"],
+        "f1_a": m_a["f1"],
+        "f1_b": m_b["f1"],
         "observed_diff": round(observed_diff, 6),
         "p_value": round(p_value, 6),
         "significant_005": p_value < 0.05,
@@ -1020,6 +1179,7 @@ def pairwise_permutation_test(edges_a: list, edges_b: list, gt_edges: set,
 # Full Evaluation for a Condition
 # =====================================================================
 
+
 def evaluate_condition(name, edges, cb_input, gt_edges, gene_subset, wall_time=0.0):
     """Compute all metrics for a condition.
 
@@ -1029,8 +1189,12 @@ def evaluate_condition(name, edges, cb_input, gt_edges, gene_subset, wall_time=0
     """
     metrics = compute_set_metrics(edges, gt_edges, gene_subset)
     shd = structural_hamming_distance(edges, gt_edges)
-    ws = mean_wasserstein_distance(edges, cb_input.expression_matrix, cb_input.interventions, gene_subset)
-    fr = false_omission_rate(edges, cb_input.expression_matrix, cb_input.interventions, gene_subset)
+    ws = mean_wasserstein_distance(
+        edges, cb_input.expression_matrix, cb_input.interventions, gene_subset
+    )
+    fr = false_omission_rate(
+        edges, cb_input.expression_matrix, cb_input.interventions, gene_subset
+    )
 
     return {
         "n_edges": len(edges),
@@ -1052,14 +1216,20 @@ def evaluate_condition(name, edges, cb_input, gt_edges, gene_subset, wall_time=0
 # Main Pipeline
 # =====================================================================
 
+
 def main(args):
     t_start = time.time()
 
     logger.info("=" * 70)
     logger.info("CausalCellBench: Local Evaluation Pipeline (M4 Mac)")
     logger.info("=" * 70)
-    logger.info("  n_genes=%d, partition_size=%d, n_cells=%d, seed=%d",
-                args.n_genes, args.partition_size, args.n_cells, args.seed)
+    logger.info(
+        "  n_genes=%d, partition_size=%d, n_cells=%d, seed=%d",
+        args.n_genes,
+        args.partition_size,
+        args.n_cells,
+        args.seed,
+    )
 
     # ------------------------------------------------------------------
     # Step 1: Load K562
@@ -1069,7 +1239,7 @@ def main(args):
     logger.info("  Shape: %s", adata.shape)
 
     # Map Ensembl IDs → gene symbols (skip if pre-subset)
-    if getattr(args, 'pre_subset', False):
+    if getattr(args, "pre_subset", False):
         logger.info("  Pre-subset mode: skipping Ensembl mapping")
         adata.var_names = [str(x) for x in adata.var_names]
     elif str(adata.var_names[0]).startswith("ENSG"):
@@ -1094,9 +1264,12 @@ def main(args):
     # ------------------------------------------------------------------
     logger.info("Step 2: Extracting controls and selecting genes")
 
-    pert_col = getattr(args, "pert_col", "gene")  # Replogle K562='gene'; Norman/RPE1='perturbation'
+    pert_col = getattr(
+        args, "pert_col", "gene"
+    )  # Replogle K562='gene'; Norman/RPE1='perturbation'
     assert pert_col in adata.obs.columns, (
-        f"--pert-col '{pert_col}' not in obs {list(adata.obs.columns)}")
+        f"--pert-col '{pert_col}' not in obs {list(adata.obs.columns)}"
+    )
 
     # Find control cells
     control_mask = adata.obs[pert_col] == "non-targeting"
@@ -1105,23 +1278,28 @@ def main(args):
             control_mask = adata.obs[pert_col] == label
             if control_mask.sum() > 0:
                 break
-    assert control_mask.sum() > 0, f"No control cells found"
+    assert control_mask.sum() > 0, "No control cells found"
 
     control = adata[control_mask].copy()
     logger.info("  Control cells: %d", control.n_obs)
 
-    if getattr(args, 'pre_subset', False):
+    if getattr(args, "pre_subset", False):
         # Pre-subset mode: all var_names are the gene subset
         gene_subset = sorted(adata.var_names.tolist())
-        logger.info("  Pre-subset mode: using all %d var_names as gene subset", len(gene_subset))
+        logger.info(
+            "  Pre-subset mode: using all %d var_names as gene subset", len(gene_subset)
+        )
     else:
         # Find perturbation-eligible genes (≥10 cells AND in var_names)
         pert_counts = adata.obs[pert_col].value_counts()
         var_set = set(adata.var_names)
-        eligible = sorted([
-            g for g, c in pert_counts.items()
-            if g != "non-targeting" and c >= 10 and g in var_set
-        ])
+        eligible = sorted(
+            [
+                g
+                for g, c in pert_counts.items()
+                if g != "non-targeting" and c >= 10 and g in var_set
+            ]
+        )
         logger.info("  Perturbation-eligible genes: %d", len(eligible))
 
         # Select gene subset
@@ -1131,9 +1309,17 @@ def main(args):
                 requested = [line.strip() for line in f if line.strip()]
             eligible_set = set(eligible)
             gene_subset = sorted([g for g in requested if g in eligible_set])
-            logger.info("  From gene list: %d/%d genes found in eligible set", len(gene_subset), len(requested))
+            logger.info(
+                "  From gene list: %d/%d genes found in eligible set",
+                len(gene_subset),
+                len(requested),
+            )
         else:
-            gene_subset = sorted(rng.choice(eligible, size=min(args.n_genes, len(eligible)), replace=False))
+            gene_subset = sorted(
+                rng.choice(
+                    eligible, size=min(args.n_genes, len(eligible)), replace=False
+                )
+            )
     logger.info("  Selected %d genes", len(gene_subset))
 
     # Build aligned control matrix
@@ -1153,14 +1339,19 @@ def main(args):
     rng_ctrl = np.random.default_rng(args.seed)
     ctrl_idx = rng_ctrl.choice(X_ctrl_full.shape[0], size=n_ctrl, replace=False)
     ctrl_X = X_ctrl_full[ctrl_idx]
-    logger.info("  Control matrix: %s (subsampled from %d)", ctrl_X.shape, X_ctrl_full.shape[0])
+    logger.info(
+        "  Control matrix: %s (subsampled from %d)", ctrl_X.shape, X_ctrl_full.shape[0]
+    )
     # Keep full control matrix for dispersion estimation (needs all cells)
     ctrl_X_full = X_ctrl_full
 
     # ------------------------------------------------------------------
     # Step 3: Estimate NB dispersion
     # ------------------------------------------------------------------
-    logger.info("Step 3: Estimating NB dispersion (from all %d control cells)", ctrl_X_full.shape[0])
+    logger.info(
+        "Step 3: Estimating NB dispersion (from all %d control cells)",
+        ctrl_X_full.shape[0],
+    )
     mu_disp, r_disp = estimate_nb_dispersion(ctrl_X_full)
     logger.info("  Median r=%.2f, mean mu=%.2f", np.median(r_disp), np.mean(mu_disp))
 
@@ -1183,14 +1374,21 @@ def main(args):
             X_g = X_g.toarray()
         expr = np.asarray(X_g[:, col_idx], dtype=np.float32)
         if expr.shape[0] > args.n_cells:
-            gene_seed_sub = args.seed + int(hashlib.md5(gene.encode()).hexdigest()[:8], 16)
+            gene_seed_sub = args.seed + int(
+                hashlib.md5(gene.encode()).hexdigest()[:8], 16
+            )
             rng_sub = np.random.default_rng(gene_seed_sub)
             expr = expr[rng_sub.choice(expr.shape[0], size=args.n_cells, replace=False)]
         real_pert_matrices.append(expr)
         real_pert_labels.extend([gene] * expr.shape[0])
     cb_real = build_cb_input(ctrl_X, real_pert_matrices, real_pert_labels, gene_subset)
     t_real_prep = time.time() - t0
-    logger.info("  Real: %d cells (%d ctrl + %d pert)", cb_real.total_cells, cb_real.n_control_cells, cb_real.n_perturbation_cells)
+    logger.info(
+        "  Real: %d cells (%d ctrl + %d pert)",
+        cb_real.total_cells,
+        cb_real.n_control_cells,
+        cb_real.n_perturbation_cells,
+    )
 
     # --- Overlay-resampled real (tests if overlay sampling preserves signal) ---
     # Take MEAN expression from real perturbed cells, then overlay-sample.
@@ -1208,78 +1406,125 @@ def main(args):
             X_g = X_g.toarray()
         real_mean = np.asarray(X_g[:, col_idx], dtype=np.float64).mean(axis=0)
         gene_seed = args.seed + int(hashlib.md5(gene.encode()).hexdigest()[:8], 16)
-        sampled = sample_perturbed_cells_overlay(ctrl_X, real_mean, args.n_cells, seed=gene_seed)
+        sampled = sample_perturbed_cells_overlay(
+            ctrl_X, real_mean, args.n_cells, seed=gene_seed
+        )
         nb_real_mats.append(sampled)
         nb_real_labels.extend([gene] * args.n_cells)
     cb_nb_real = build_cb_input(ctrl_X, nb_real_mats, nb_real_labels, gene_subset)
-    conditions_data["overlay_resampled_real"] = {"cb": cb_nb_real, "prep_time": time.time() - t0}
-    logger.info("  Overlay-resampled real: %d cells (%.1fs)", cb_nb_real.total_cells, conditions_data["overlay_resampled_real"]["prep_time"])
+    conditions_data["overlay_resampled_real"] = {
+        "cb": cb_nb_real,
+        "prep_time": time.time() - t0,
+    }
+    logger.info(
+        "  Overlay-resampled real: %d cells (%.1fs)",
+        cb_nb_real.total_cells,
+        conditions_data["overlay_resampled_real"]["prep_time"],
+    )
 
     # --- Perturbation effect diagnostic ---
     logger.info("  Perturbation effect diagnostic (mean |log2FC| per condition):")
     ctrl_means_diag = ctrl_X.mean(axis=0)
-    for cond_name_d, data_d in [("real", (real_pert_matrices, real_pert_labels)),
-                                 ("nb_resampled", (nb_real_mats, nb_real_labels))]:
+    for cond_name_d, data_d in [
+        ("real", (real_pert_matrices, real_pert_labels)),
+        ("nb_resampled", (nb_real_mats, nb_real_labels)),
+    ]:
         mats_d, labs_d = data_d
         if not mats_d:
             continue
         all_means_d = np.stack([m.mean(axis=0) for m in mats_d])
         lfc = np.log2(np.maximum(all_means_d, 0.01) / np.maximum(ctrl_means_diag, 0.01))
-        logger.info("    %s: mean |log2FC|=%.3f, max |log2FC|=%.3f, genes w/ |lfc|>0.5: %d/%d",
-                     cond_name_d, np.abs(lfc).mean(), np.abs(lfc).max(),
-                     (np.abs(lfc).max(axis=1) > 0.5).sum(), len(mats_d))
+        logger.info(
+            "    %s: mean |log2FC|=%.3f, max |log2FC|=%.3f, genes w/ |lfc|>0.5: %d/%d",
+            cond_name_d,
+            np.abs(lfc).mean(),
+            np.abs(lfc).max(),
+            (np.abs(lfc).max(axis=1) > 0.5).sum(),
+            len(mats_d),
+        )
 
     # --- ElasticNet ---
     # Train on ALL controls (better model), but build CausalBenchInput with subsampled
     logger.info("Step 4b: ElasticNet baseline")
     t0 = time.time()
-    enet_mats, enet_labels = run_elasticnet_baseline(ctrl_X_full, ctrl_X, gene_subset, args.n_cells, seed=args.seed)
+    enet_mats, enet_labels = run_elasticnet_baseline(
+        ctrl_X_full, ctrl_X, gene_subset, args.n_cells, seed=args.seed
+    )
     cb_enet = build_cb_input(ctrl_X, enet_mats, enet_labels, gene_subset)
     t_enet_prep = time.time() - t0
     logger.info("  ElasticNet: %d cells (%.1fs)", cb_enet.total_cells, t_enet_prep)
 
     # --- Real model outputs (if provided) ---
     real_models_loaded = set()
-    if getattr(args, 'model_outputs_dir', None):
+    if getattr(args, "model_outputs_dir", None):
         model_outputs_dir = args.model_outputs_dir
-        logger.info("Step 4b: Loading real model predictions from %s", model_outputs_dir)
+        logger.info(
+            "Step 4b: Loading real model predictions from %s", model_outputs_dir
+        )
         for model_name in ["cpa", "gears", "scgpt", "geneformer"]:
             t0 = time.time()
             mats, labels = load_real_model_predictions(
-                model_outputs_dir, model_name, gene_subset, ctrl_X,
-                args.n_cells, seed=args.seed,
+                model_outputs_dir,
+                model_name,
+                gene_subset,
+                ctrl_X,
+                args.n_cells,
+                seed=args.seed,
             )
             if mats is not None:
                 cb = build_cb_input(ctrl_X, mats, labels, gene_subset)
-                conditions_data[f"{model_name}_real"] = {"cb": cb, "prep_time": time.time() - t0}
+                conditions_data[f"{model_name}_real"] = {
+                    "cb": cb,
+                    "prep_time": time.time() - t0,
+                }
                 real_models_loaded.add(model_name)
-                logger.info("  %s (real): %d cells (%.1fs)", model_name, cb.total_cells, time.time() - t0)
+                logger.info(
+                    "  %s (real): %d cells (%.1fs)",
+                    model_name,
+                    cb.total_cells,
+                    time.time() - t0,
+                )
 
     # --- Model stubs (DEPRECATED — only used when no real model outputs available) ---
     # Stubs use arbitrary parameters and are not suitable for publication.
     # Always prefer real model outputs via --model-outputs-dir.
-    use_stubs = getattr(args, 'use_stubs', False) and not real_models_loaded
+    use_stubs = getattr(args, "use_stubs", False) and not real_models_loaded
     if use_stubs:
-        logger.warning("Step 4: Running model stubs (DEPRECATED — use --model-outputs-dir for real outputs)")
+        logger.warning(
+            "Step 4: Running model stubs (DEPRECATED — use --model-outputs-dir for real outputs)"
+        )
         for model_name, cfg in MODEL_CONFIGS.items():
             logger.info("Step 4: %s stub", model_name)
             t0 = time.time()
             mats, labels = run_model_stub(
-                ctrl_X_full, ctrl_X, gene_subset, args.n_cells,
-                model_name=model_name, **cfg,
+                ctrl_X_full,
+                ctrl_X,
+                gene_subset,
+                args.n_cells,
+                model_name=model_name,
+                **cfg,
             )
             cb = build_cb_input(ctrl_X, mats, labels, gene_subset)
             conditions_data[model_name] = {"cb": cb, "prep_time": time.time() - t0}
-            logger.info("  %s: %d cells (%.1fs)", model_name, cb.total_cells, conditions_data[model_name]["prep_time"])
+            logger.info(
+                "  %s: %d cells (%.1fs)",
+                model_name,
+                cb.total_cells,
+                conditions_data[model_name]["prep_time"],
+            )
     elif not real_models_loaded:
-        logger.info("Step 4: No real model outputs found and stubs disabled. Use --model-outputs-dir or --use-stubs.")
+        logger.info(
+            "Step 4: No real model outputs found and stubs disabled. Use --model-outputs-dir or --use-stubs."
+        )
 
     # --- Random baseline ---
     cb_rand = None
-    if not getattr(args, 'skip_random', False):
+    if not getattr(args, "skip_random", False):
         logger.info("Step 4: Random baseline")
         t0 = time.time()
-        rand_mats, rand_labels = run_random_baseline(ctrl_X, gene_subset, args.n_cells, seed=args.seed)
+        rand_mats, rand_labels = run_random_baseline(
+            ctrl_X, gene_subset, args.n_cells, seed=args.seed
+        )
         cb_rand = build_cb_input(ctrl_X, rand_mats, rand_labels, gene_subset)
         t_rand_prep = time.time() - t0
         logger.info("  Random: %d cells (%.1fs)", cb_rand.total_cells, t_rand_prep)
@@ -1300,31 +1545,44 @@ def main(args):
         all_conditions["random"] = {"cb": cb_rand, "prep_time": t_rand_prep}
 
     gies_cache = None
-    if getattr(args, 'gies_cache_dir', None):
-        gies_cache = os.path.join(args.gies_cache_dir, f"n{len(gene_subset)}_s{args.seed}_p{args.partition_size}")
+    if getattr(args, "gies_cache_dir", None):
+        gies_cache = os.path.join(
+            args.gies_cache_dir,
+            f"n{len(gene_subset)}_s{args.seed}_p{args.partition_size}",
+        )
         os.makedirs(gies_cache, exist_ok=True)
         logger.info("  GIES cache dir: %s", gies_cache)
 
     edges_by_condition = {}
     # Run GIES for each condition — partitions within each are parallelized
     for cond_name, cond_data in all_conditions.items():
-        cache_path = os.path.join(gies_cache, f"{cond_name}_edges.json") if gies_cache else None
+        cache_path = (
+            os.path.join(gies_cache, f"{cond_name}_edges.json") if gies_cache else None
+        )
         if cache_path and os.path.exists(cache_path):
             with open(cache_path) as f:
                 cached = json.load(f)
             edges = set(tuple(e) for e in cached["edges"])
             t_gies = cached.get("gies_time", 0)
-            logger.info("  GIES on %s... CACHED (%d edges, %.1fs)", cond_name, len(edges), t_gies)
+            logger.info(
+                "  GIES on %s... CACHED (%d edges, %.1fs)",
+                cond_name,
+                len(edges),
+                t_gies,
+            )
         else:
             logger.info("  GIES on %s...", cond_name)
             t0 = time.time()
-            edges = run_gies(cond_data["cb"], seed=args.seed,
-                             partition_size=args.partition_size)
+            edges = run_gies(
+                cond_data["cb"], seed=args.seed, partition_size=args.partition_size
+            )
             t_gies = time.time() - t0
             logger.info("    %s: %d edges (%.1fs)", cond_name, len(edges), t_gies)
             if cache_path:
                 with open(cache_path, "w") as f:
-                    json.dump({"edges": [list(e) for e in edges], "gies_time": t_gies}, f)
+                    json.dump(
+                        {"edges": [list(e) for e in edges], "gies_time": t_gies}, f
+                    )
         edges_by_condition[cond_name] = edges
         cond_data["gies_time"] = t_gies
 
@@ -1332,15 +1590,19 @@ def main(args):
     # Step 5b: Run inspre on all conditions (second causal discovery backend)
     # ------------------------------------------------------------------
     inspre_edges_by_condition = {}
-    if getattr(args, 'run_inspre', False):
+    if getattr(args, "run_inspre", False):
         logger.info("Step 5b: Running inspre causal discovery")
         import subprocess
         import tempfile
         import pandas as pd_inspre
 
         # Find Rscript
-        rscript_paths = ["/opt/mamba/envs/renv/bin/Rscript", "/usr/local/bin/Rscript",
-                         "/usr/bin/Rscript", "Rscript"]
+        rscript_paths = [
+            "/opt/mamba/envs/renv/bin/Rscript",
+            "/usr/local/bin/Rscript",
+            "/usr/bin/Rscript",
+            "Rscript",
+        ]
         rscript = None
         for rp in rscript_paths:
             if os.path.exists(rp) or rp == "Rscript":
@@ -1348,7 +1610,7 @@ def main(args):
                 break
 
         if rscript:
-            r_inspre_code = '''
+            r_inspre_code = """
 library(inspre)
 args <- commandArgs(trailingOnly = TRUE)
 ace_path <- args[1]
@@ -1368,16 +1630,26 @@ if (any(valid_te)) {
 }
 G_best <- G_hat[,,best_idx]
 write.csv(G_best, out_path, row.names=FALSE)
-'''
+"""
             # Compute ACE matrices for each condition
             ctrl_mean_flat = ctrl_X.mean(axis=0)
             for cond_name, cond_data in all_conditions.items():
-                inspre_cache = os.path.join(gies_cache, f"{cond_name}_inspre_edges.json") if gies_cache else None
+                inspre_cache = (
+                    os.path.join(gies_cache, f"{cond_name}_inspre_edges.json")
+                    if gies_cache
+                    else None
+                )
                 if inspre_cache and os.path.exists(inspre_cache):
                     with open(inspre_cache) as f:
                         cached = json.load(f)
-                    inspre_edges_by_condition[cond_name] = set(tuple(e) for e in cached["edges"])
-                    logger.info("  inspre %s: CACHED (%d edges)", cond_name, len(inspre_edges_by_condition[cond_name]))
+                    inspre_edges_by_condition[cond_name] = set(
+                        tuple(e) for e in cached["edges"]
+                    )
+                    logger.info(
+                        "  inspre %s: CACHED (%d edges)",
+                        cond_name,
+                        len(inspre_edges_by_condition[cond_name]),
+                    )
                     continue
 
                 cb = cond_data["cb"]
@@ -1409,7 +1681,9 @@ write.csv(G_best, out_path, row.names=FALSE)
                         t0 = time.time()
                         result = subprocess.run(
                             [rscript, r_path, ace_path, out_path, str(target_n)],
-                            capture_output=True, text=True, timeout=600,
+                            capture_output=True,
+                            text=True,
+                            timeout=600,
                         )
                         t_inspre = time.time() - t0
                         if result.returncode == 0 and os.path.exists(out_path):
@@ -1420,12 +1694,27 @@ write.csv(G_best, out_path, row.names=FALSE)
                                     if i != j and abs(adj[i, j]) > 1e-6:
                                         edges.add((gene_subset[i], gene_subset[j]))
                             inspre_edges_by_condition[cond_name] = edges
-                            logger.info("  inspre %s: %d edges (%.1fs)", cond_name, len(edges), t_inspre)
+                            logger.info(
+                                "  inspre %s: %d edges (%.1fs)",
+                                cond_name,
+                                len(edges),
+                                t_inspre,
+                            )
                             if inspre_cache:
                                 with open(inspre_cache, "w") as f:
-                                    json.dump({"edges": [list(e) for e in edges], "time": t_inspre}, f)
+                                    json.dump(
+                                        {
+                                            "edges": [list(e) for e in edges],
+                                            "time": t_inspre,
+                                        },
+                                        f,
+                                    )
                         else:
-                            logger.warning("  inspre %s failed: %s", cond_name, result.stderr[-200:] if result.stderr else "unknown")
+                            logger.warning(
+                                "  inspre %s failed: %s",
+                                cond_name,
+                                result.stderr[-200:] if result.stderr else "unknown",
+                            )
                     except subprocess.TimeoutExpired:
                         logger.warning("  inspre %s timed out", cond_name)
                     except FileNotFoundError:
@@ -1439,23 +1728,39 @@ write.csv(G_best, out_path, row.names=FALSE)
     # ------------------------------------------------------------------
     edges_grnboost_real = None
     t_grnboost = 0.0
-    grn_cache_path = os.path.join(gies_cache, "grnboost2_edges.json") if gies_cache else None
+    grn_cache_path = (
+        os.path.join(gies_cache, "grnboost2_edges.json") if gies_cache else None
+    )
     if grn_cache_path and os.path.exists(grn_cache_path):
         with open(grn_cache_path) as f:
             cached = json.load(f)
         edges_grnboost_real = set(tuple(e) for e in cached["edges"])
         t_grnboost = cached.get("time", 0)
-        logger.info("Step 6: GRNBoost2 CACHED (%d edges, %.1fs)", len(edges_grnboost_real), t_grnboost)
+        logger.info(
+            "Step 6: GRNBoost2 CACHED (%d edges, %.1fs)",
+            len(edges_grnboost_real),
+            t_grnboost,
+        )
     else:
         try:
             logger.info("Step 6: Running GRNBoost2 on real data")
             t0 = time.time()
-            edges_grnboost_real = run_grnboost(cb_real, n_top=len(edges_by_condition["real_data"]) * 2)
+            edges_grnboost_real = run_grnboost(
+                cb_real, n_top=len(edges_by_condition["real_data"]) * 2
+            )
             t_grnboost = time.time() - t0
-            logger.info("  GRNBoost2: %d edges (%.1fs)", len(edges_grnboost_real), t_grnboost)
+            logger.info(
+                "  GRNBoost2: %d edges (%.1fs)", len(edges_grnboost_real), t_grnboost
+            )
             if grn_cache_path:
                 with open(grn_cache_path, "w") as f:
-                    json.dump({"edges": [list(e) for e in edges_grnboost_real], "time": t_grnboost}, f)
+                    json.dump(
+                        {
+                            "edges": [list(e) for e in edges_grnboost_real],
+                            "time": t_grnboost,
+                        },
+                        f,
+                    )
         except Exception as e:
             logger.warning("  GRNBoost2 failed (dask version issue): %s", e)
             logger.info("  Skipping GRNBoost2 — will fix dependency later")
@@ -1465,15 +1770,18 @@ write.csv(G_best, out_path, row.names=FALSE)
     # ------------------------------------------------------------------
     edges_dcdi_real = None
     t_dcdi = 0.0
-    if getattr(args, 'run_dcdi', False):
+    if getattr(args, "run_dcdi", False):
         try:
             from causalcellbench.causal.dcdi_runner import run_dcdi
+
             logger.info("Step 6b: Running DCDI-G on real data (soft interventions)")
             t0 = time.time()
             edges_dcdi_real = run_dcdi(
-                cb_real, seed=args.seed, partition_size=args.partition_size,
+                cb_real,
+                seed=args.seed,
+                partition_size=args.partition_size,
                 intervention_type="imperfect",
-                max_epochs=getattr(args, 'dcdi_epochs', 200),
+                max_epochs=getattr(args, "dcdi_epochs", 200),
             )
             t_dcdi = time.time() - t0
             logger.info("  DCDI-G: %d edges (%.1fs)", len(edges_dcdi_real), t_dcdi)
@@ -1488,7 +1796,9 @@ write.csv(G_best, out_path, row.names=FALSE)
     gt_edges = set(edges_by_condition["real_data"])
     logger.info("  Ground truth: %d edges from real-data GIES", len(gt_edges))
 
-    random_floor = compute_random_auprc(gt_edges, gene_subset, n_samples=50, seed=args.seed)
+    random_floor = compute_random_auprc(
+        gt_edges, gene_subset, n_samples=50, seed=args.seed
+    )
     logger.info("  Random floor AUPRC: %.4f", random_floor)
 
     results = {}
@@ -1498,29 +1808,58 @@ write.csv(G_best, out_path, row.names=FALSE)
         if cond_name == "real_data":
             results[cond_name] = {
                 "n_edges": len(edges),
-                "f1": 1.0, "precision": 1.0, "recall": 1.0,
-                "auprc": 1.0, "auprc_topk": 1.0, "precision_at_100": 1.0,
+                "f1": 1.0,
+                "precision": 1.0,
+                "recall": 1.0,
+                "auprc": 1.0,
+                "auprc_topk": 1.0,
+                "precision_at_100": 1.0,
                 "n_true_positive": len(edges),
                 "shd": {"shd": 0, "missing": 0, "extra": 0, "reversed": 0},
-                "wasserstein": mean_wasserstein_distance(edges, cond_data["cb"].expression_matrix, cond_data["cb"].interventions, gene_subset),
-                "false_omission": false_omission_rate(edges, cond_data["cb"].expression_matrix, cond_data["cb"].interventions, gene_subset),
+                "wasserstein": mean_wasserstein_distance(
+                    edges,
+                    cond_data["cb"].expression_matrix,
+                    cond_data["cb"].interventions,
+                    gene_subset,
+                ),
+                "false_omission": false_omission_rate(
+                    edges,
+                    cond_data["cb"].expression_matrix,
+                    cond_data["cb"].interventions,
+                    gene_subset,
+                ),
                 "wall_time": wall_time,
             }
         else:
             results[cond_name] = evaluate_condition(
-                cond_name, edges, cond_data["cb"], gt_edges, gene_subset, wall_time,
+                cond_name,
+                edges,
+                cond_data["cb"],
+                gt_edges,
+                gene_subset,
+                wall_time,
             )
 
     # GRNBoost2 on real data (if available)
     if edges_grnboost_real is not None:
         results["grnboost2_real"] = evaluate_condition(
-            "grnboost2_real", edges_grnboost_real, cb_real, gt_edges, gene_subset, t_grnboost,
+            "grnboost2_real",
+            edges_grnboost_real,
+            cb_real,
+            gt_edges,
+            gene_subset,
+            t_grnboost,
         )
 
     # DCDI-G on real data (if available)
     if edges_dcdi_real is not None:
         results["dcdi_real"] = evaluate_condition(
-            "dcdi_real", edges_dcdi_real, cb_real, gt_edges, gene_subset, t_dcdi,
+            "dcdi_real",
+            edges_dcdi_real,
+            cb_real,
+            gt_edges,
+            gene_subset,
+            t_dcdi,
         )
 
     # inspre results (if available) — evaluate against GIES ground truth
@@ -1531,7 +1870,9 @@ write.csv(G_best, out_path, row.names=FALSE)
             cb = all_conditions.get(cond_name, {}).get("cb")
             if cb is None:
                 continue
-            inspre_metrics = compute_set_metrics(list(inspre_edges), gt_edges, gene_subset)
+            inspre_metrics = compute_set_metrics(
+                list(inspre_edges), gt_edges, gene_subset
+            )
             inspre_results[cond_name] = {
                 "n_edges": len(inspre_edges),
                 "f1": inspre_metrics["f1"],
@@ -1539,14 +1880,22 @@ write.csv(G_best, out_path, row.names=FALSE)
                 "recall": inspre_metrics["recall"],
                 "n_true_positive": inspre_metrics["n_true_positive"],
             }
-            logger.info("    inspre %s: F1=%.4f, P=%.4f, R=%.4f (%d edges)",
-                        cond_name, inspre_metrics["f1"], inspre_metrics["precision"],
-                        inspre_metrics["recall"], len(inspre_edges))
+            logger.info(
+                "    inspre %s: F1=%.4f, P=%.4f, R=%.4f (%d edges)",
+                cond_name,
+                inspre_metrics["f1"],
+                inspre_metrics["precision"],
+                inspre_metrics["recall"],
+                len(inspre_edges),
+            )
 
         # Also compute inspre-on-real as alternative ground truth
         if "real_data" in inspre_edges_by_condition:
             inspre_gt = inspre_edges_by_condition["real_data"]
-            logger.info("  Evaluating GIES results against inspre ground truth (%d edges):", len(inspre_gt))
+            logger.info(
+                "  Evaluating GIES results against inspre ground truth (%d edges):",
+                len(inspre_gt),
+            )
             for cond_name in results:
                 if cond_name == "real_data":
                     continue
@@ -1569,12 +1918,18 @@ write.csv(G_best, out_path, row.names=FALSE)
         elif cond_name == "dcdi_real" and edges_dcdi_real is not None:
             edges = list(edges_dcdi_real)
         if edges:
-            boot = bootstrap_evaluate(edges, gt_edges, gene_subset,
-                                      n_bootstrap=200, seed=args.seed)
+            boot = bootstrap_evaluate(
+                edges, gt_edges, gene_subset, n_bootstrap=200, seed=args.seed
+            )
             bootstrap_results[cond_name] = boot
             f1_ci = boot["f1"]
-            logger.info("  %s: F1=%.4f [%.4f, %.4f]",
-                        cond_name, f1_ci["mean"], f1_ci["ci_lo"], f1_ci["ci_hi"])
+            logger.info(
+                "  %s: F1=%.4f [%.4f, %.4f]",
+                cond_name,
+                f1_ci["mean"],
+                f1_ci["ci_lo"],
+                f1_ci["ci_hi"],
+            )
 
     # ------------------------------------------------------------------
     # Step 7c: Prediction accuracy (if real model outputs available)
@@ -1587,10 +1942,11 @@ write.csv(G_best, out_path, row.names=FALSE)
                 cond = conditions_data[cond_key]
                 # Re-extract model matrices from the cb_input using dict-based grouping
                 cb = cond["cb"]
-                model_mats_flat = cb.expression_matrix[cb.n_control_cells:]
-                model_labels = cb.interventions[cb.n_control_cells:]
+                model_mats_flat = cb.expression_matrix[cb.n_control_cells :]
+                model_labels = cb.interventions[cb.n_control_cells :]
                 # Group rows by gene using a dict (safe even if labels are non-contiguous)
                 from collections import defaultdict
+
                 gene_rows = defaultdict(list)
                 for i, lab in enumerate(model_labels):
                     gene_rows[lab].append(model_mats_flat[i])
@@ -1600,13 +1956,20 @@ write.csv(G_best, out_path, row.names=FALSE)
                     model_labs.extend([gene] * len(rows))
 
                 acc = compute_prediction_accuracy(
-                    model_mats, model_labs,
-                    real_pert_matrices, real_pert_labels,
-                    gene_subset
+                    model_mats,
+                    model_labs,
+                    real_pert_matrices,
+                    real_pert_labels,
+                    gene_subset,
                 )
                 prediction_accuracy[model_name] = acc
-                logger.info("  %s prediction accuracy: MSE=%.4f, r=%.4f, cos=%.4f",
-                            model_name, acc["mse"], acc["pearson_r"], acc["cosine_sim"])
+                logger.info(
+                    "  %s prediction accuracy: MSE=%.4f, r=%.4f, cos=%.4f",
+                    model_name,
+                    acc["mse"],
+                    acc["pearson_r"],
+                    acc["cosine_sim"],
+                )
 
     # ------------------------------------------------------------------
     # Step 7d: Pairwise significance tests (key model comparisons)
@@ -1627,13 +1990,20 @@ write.csv(G_best, out_path, row.names=FALSE)
         else:
             edges_b_list = list(edges_by_condition.get(cond_b, []))
         if edges_a and edges_b_list:
-            test = pairwise_permutation_test(edges_a, edges_b_list, gt_edges,
-                                              gene_subset, n_perm=500, seed=args.seed)
+            test = pairwise_permutation_test(
+                edges_a, edges_b_list, gt_edges, gene_subset, n_perm=500, seed=args.seed
+            )
             key = f"{cond_a}_vs_{cond_b}"
             pairwise_tests[key] = test
             sig = "*" if test["significant_005"] else ""
-            logger.info("  %s vs %s: dF1=%.4f, p=%.4f %s",
-                        cond_a, cond_b, test["observed_diff"], test["p_value"], sig)
+            logger.info(
+                "  %s vs %s: dF1=%.4f, p=%.4f %s",
+                cond_a,
+                cond_b,
+                test["observed_diff"],
+                test["p_value"],
+                sig,
+            )
 
     # ------------------------------------------------------------------
     # Step 8: Save and print results
@@ -1671,27 +2041,47 @@ write.csv(G_best, out_path, row.names=FALSE)
     print("=" * 100)
     print("CAUSALCELLBENCH EVALUATION RESULTS")
     print("=" * 100)
-    print(f"  Genes: {len(gene_subset)} | Controls: {n_ctrl} (of {control.n_obs}) | "
-          f"GT edges: {len(gt_edges)} | Random floor: {random_floor:.4f}")
+    print(
+        f"  Genes: {len(gene_subset)} | Controls: {n_ctrl} (of {control.n_obs}) | "
+        f"GT edges: {len(gt_edges)} | Random floor: {random_floor:.4f}"
+    )
     print()
     header = f"  {'Condition':<18} {'Edges':>6} {'F1':>7} {'Prec':>7} {'Rec':>7} {'AUPRC':>7} {'P@100':>7} {'TP':>5} {'SHD':>6} {'Time':>7}"
     print(header)
-    print(f"  {'-'*18} {'-'*6} {'-'*7} {'-'*7} {'-'*7} {'-'*7} {'-'*7} {'-'*5} {'-'*6} {'-'*7}")
+    print(
+        f"  {'-' * 18} {'-' * 6} {'-' * 7} {'-' * 7} {'-' * 7} {'-' * 7} {'-' * 7} {'-' * 5} {'-' * 6} {'-' * 7}"
+    )
 
     display_order = [
-        "real_data", "overlay_resampled_real", "elastic_net",
-        "cpa_real", "gears_real", "scgpt_real", "geneformer_real",
-        "cpa", "gears", "scgpt", "geneformer",
-        "grnboost2_real", "dcdi_real", "random",
+        "real_data",
+        "overlay_resampled_real",
+        "elastic_net",
+        "cpa_real",
+        "gears_real",
+        "scgpt_real",
+        "geneformer_real",
+        "cpa",
+        "gears",
+        "scgpt",
+        "geneformer",
+        "grnboost2_real",
+        "dcdi_real",
+        "random",
     ]
     display_names = {
-        "real_data": "Real Data (UB)", "overlay_resampled_real": "Overlay Real",
+        "real_data": "Real Data (UB)",
+        "overlay_resampled_real": "Overlay Real",
         "elastic_net": "ElasticNet (reg)",
-        "cpa_real": "CPA", "gears_real": "GEARS",
-        "scgpt_real": "scGPT", "geneformer_real": "Geneformer",
-        "cpa": "CPA (stub)", "gears": "GEARS (stub)",
-        "scgpt": "scGPT (stub)", "geneformer": "Geneformer (stub)",
-        "grnboost2_real": "GRNBoost2 (obs)", "dcdi_real": "DCDI-G (soft)",
+        "cpa_real": "CPA",
+        "gears_real": "GEARS",
+        "scgpt_real": "scGPT",
+        "geneformer_real": "Geneformer",
+        "cpa": "CPA (stub)",
+        "gears": "GEARS (stub)",
+        "scgpt": "scGPT (stub)",
+        "geneformer": "Geneformer (stub)",
+        "grnboost2_real": "GRNBoost2 (obs)",
+        "dcdi_real": "DCDI-G (soft)",
         "random": "Random (floor)",
     }
 
@@ -1701,10 +2091,12 @@ write.csv(G_best, out_path, row.names=FALSE)
         c = results[key]
         name = display_names.get(key, key)
         shd_v = c.get("shd", {}).get("shd", 0)
-        auprc_display = c.get('auprc_topk', c['auprc'])
-        print(f"  {name:<18} {c['n_edges']:>6} {c.get('f1', 0):>7.4f} {c.get('precision', 0):>7.4f} "
-              f"{c.get('recall', 0):>7.4f} {auprc_display:>7.4f} {c.get('precision_at_100', 0):>7.4f} "
-              f"{c.get('n_true_positive', 0):>5} {shd_v:>6} {c['wall_time']:>6.1f}s")
+        auprc_display = c.get("auprc_topk", c["auprc"])
+        print(
+            f"  {name:<18} {c['n_edges']:>6} {c.get('f1', 0):>7.4f} {c.get('precision', 0):>7.4f} "
+            f"{c.get('recall', 0):>7.4f} {auprc_display:>7.4f} {c.get('precision_at_100', 0):>7.4f} "
+            f"{c.get('n_true_positive', 0):>5} {shd_v:>6} {c['wall_time']:>6.1f}s"
+        )
 
     print()
     print(f"  Random floor AUPRC: {random_floor:.4f}")
@@ -1717,31 +2109,75 @@ write.csv(G_best, out_path, row.names=FALSE)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CausalCellBench local evaluation")
-    parser.add_argument("--data-path", default="data/k562_real.h5ad", help="Path to dataset h5ad")
-    parser.add_argument("--pert-col", default="gene",
-                        help="obs column with perturbation labels (Replogle='gene', Norman/RPE1='perturbation')")
-    parser.add_argument("--n-genes", type=int, default=100, help="Number of genes to evaluate")
-    parser.add_argument("--partition-size", type=int, default=30, help="GIES partition size")
-    parser.add_argument("--n-cells", type=int, default=100, help="Cells per perturbation")
-    parser.add_argument("--n-ctrl", type=int, default=200,
-                        help="Control cells for GIES (matched to pert count, prevents control domination)")
+    parser.add_argument(
+        "--data-path", default="data/k562_real.h5ad", help="Path to dataset h5ad"
+    )
+    parser.add_argument(
+        "--pert-col",
+        default="gene",
+        help="obs column with perturbation labels (Replogle='gene', Norman/RPE1='perturbation')",
+    )
+    parser.add_argument(
+        "--n-genes", type=int, default=100, help="Number of genes to evaluate"
+    )
+    parser.add_argument(
+        "--partition-size", type=int, default=30, help="GIES partition size"
+    )
+    parser.add_argument(
+        "--n-cells", type=int, default=100, help="Cells per perturbation"
+    )
+    parser.add_argument(
+        "--n-ctrl",
+        type=int,
+        default=200,
+        help="Control cells for GIES (matched to pert count, prevents control domination)",
+    )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--gene-list", default=None,
-                        help="File with one gene per line (overrides --n-genes and --seed selection)")
-    parser.add_argument("--model-outputs-dir", default=None,
-                        help="Directory with {model}_predictions.h5ad files from real model runs")
-    parser.add_argument("--use-stubs", action="store_true",
-                        help="Run model stubs (DEPRECATED — only use when no real model outputs available)")
-    parser.add_argument("--skip-random", action="store_true",
-                        help="Skip random baseline GIES (saves ~2.5h for 200 genes)")
-    parser.add_argument("--gies-cache-dir", default=None,
-                        help="Cache GIES edges per condition (enables incremental re-runs)")
-    parser.add_argument("--run-inspre", action="store_true",
-                        help="Also run inspre causal discovery (handles cycles, scalable)")
-    parser.add_argument("--run-dcdi", action="store_true",
-                        help="Also run DCDI-G causal discovery (slower, handles soft interventions)")
-    parser.add_argument("--dcdi-epochs", type=int, default=200, help="DCDI training epochs per partition")
-    parser.add_argument("--pre-subset", action="store_true",
-                        help="Data is already subset to target genes+cells (skip Ensembl mapping & gene selection)")
+    parser.add_argument(
+        "--gene-list",
+        default=None,
+        help="File with one gene per line (overrides --n-genes and --seed selection)",
+    )
+    parser.add_argument(
+        "--model-outputs-dir",
+        default=None,
+        help="Directory with {model}_predictions.h5ad files from real model runs",
+    )
+    parser.add_argument(
+        "--use-stubs",
+        action="store_true",
+        help="Run model stubs (DEPRECATED — only use when no real model outputs available)",
+    )
+    parser.add_argument(
+        "--skip-random",
+        action="store_true",
+        help="Skip random baseline GIES (saves ~2.5h for 200 genes)",
+    )
+    parser.add_argument(
+        "--gies-cache-dir",
+        default=None,
+        help="Cache GIES edges per condition (enables incremental re-runs)",
+    )
+    parser.add_argument(
+        "--run-inspre",
+        action="store_true",
+        help="Also run inspre causal discovery (handles cycles, scalable)",
+    )
+    parser.add_argument(
+        "--run-dcdi",
+        action="store_true",
+        help="Also run DCDI-G causal discovery (slower, handles soft interventions)",
+    )
+    parser.add_argument(
+        "--dcdi-epochs",
+        type=int,
+        default=200,
+        help="DCDI training epochs per partition",
+    )
+    parser.add_argument(
+        "--pre-subset",
+        action="store_true",
+        help="Data is already subset to target genes+cells (skip Ensembl mapping & gene selection)",
+    )
     args = parser.parse_args()
     main(args)
