@@ -13,7 +13,13 @@
 
 **REMAINING — camera-ready polish (gets cleaner, not score-critical):** pipeline overview schematic (under-figured); per-seed strip/box plot; TOST equivalence test; fig3 legend overlap + F1 typography unify; em-dash/repetition audit; K≥1000 permutation band; Zenodo data hosting (needs an account — user action).
 
-**REMAINING — journal bucket (needs GPU compute / larger writing; not runnable in this session):** J1 external GRN gold standard, J2 covariance regularizer (trained model+tool), J3 multi-seed cross-dataset, J5 combinations, J6 genome-scale, J7 identifiability theory. See below.
+**DONE — journal-tier, fully local (moves ~7 → ~8):**
+
+- **J7 identifiability theorem** — Proposition + proof that conditional independence is invariant under per-gene monotone calibration, so marginal quantile matching provably cannot close the gap (Corollary). Explains the empirical calibration null as an identifiability fact; adds the paper's first formal result (the declared theorem environments were unused). `\S sec:identifiability`.
+- **TOST equivalence test** — deep models are statistically _equivalent_ to ElasticNet at Δ=0.045 (90% CIs within band: CPA +0.014, GEARS +0.020, Geneformer +0.0002). Converts "no significant difference" → demonstrated equivalence.
+- **Per-seed strip plot** (Fig. `fig:seeds`) + permutation-count fix (500→10,000) + dropped unsupported Bonferroni claim.
+
+**REMAINING — journal bucket (GPU-gated; a hard external blocker — not runnable in this session):** J2 covariance regularizer (trained model+tool), J3 multi-seed cross-dataset, J5 combinations, J6 genome-scale — all need Modal/HPC training. **J1** (external GRN gold standard — the #1 reject-reason fix) is local but a multi-step experiment (fetch GRN, coverage-optimized re-subset, ~45-min GIES re-runs) best done in a fresh full-context session. See below.
 
 ---
 
