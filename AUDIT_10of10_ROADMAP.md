@@ -1,5 +1,22 @@
 # PerturbCausal → 10/10: Audit + Roadmap
 
+## Execution status (branch `fix/camera-ready-corrections`, 5 commits, all builds green)
+
+**DONE — camera-ready (moves ~5 → ~7):**
+
+- P0 data-integrity: Table 1 Edges column regenerated; GRNBoost2 3,119→2,327 (fabricated); RPE1 deflated bootstrap means → true point estimates (GEARS 0.414/CPA 0.450/ENet 0.437); GRNBoost2 significance un-misattributed (n=20 p<1e-4 vs n=5 floor); RPE1 810-vs-1,137 reconciled; invalid pairwise test deprecated; cosine direction fixed; CPA cov 0.997→0.996; GT range corrected.
+- P1 stats: invalid STATE n=3 parametric CI removed (report raw per-seed); MDE corrected to include n=5 deep (0.022–0.027); 0.32-vs-0.42 ElasticNet inconsistency fixed.
+- P2 framing: "first" claim tightened; "invariant"→"consistent across conditions tested"; 2 uncited competitors added (fernandez2026grnbreak arXiv 2605.04930, zinati2024groundgan Nat Commun 15:4055 — both web-verified) + GRN-simulator distinction paragraph.
+- P3 figures: **Figure 1 regenerated** (Wong colorblind palette, correct seed counts, rotated labels, de-clipped) — the CRITICAL fig issue.
+- P4 prose: abstract cut ~330→~210 words (mechanism-led, de-AI, removed invalid \S\ref); Conclusion split 1→3 paragraphs; "Six limitations" signpost removed; Track B zero-coverage disclosed honestly.
+- P5 repro: Python version reconciled (Methods↔appendix).
+
+**REMAINING — camera-ready polish (gets cleaner, not score-critical):** pipeline overview schematic (under-figured); per-seed strip/box plot; TOST equivalence test; fig3 legend overlap + F1 typography unify; em-dash/repetition audit; K≥1000 permutation band; Zenodo data hosting (needs an account — user action).
+
+**REMAINING — journal bucket (needs GPU compute / larger writing; not runnable in this session):** J1 external GRN gold standard, J2 covariance regularizer (trained model+tool), J3 multi-seed cross-dataset, J5 combinations, J6 genome-scale, J7 identifiability theory. See below.
+
+---
+
 **Date:** 2026-06-23 · **Audited SHA:** `e89cb02` (main) · **Manuscript:** `submissions/icml/CausalCellBench_ICML.tex`
 **Method:** 9-dimension multi-agent area-chair + hostile-reviewer audit (18 agents, adversarial cross-verification), per the `audit.md` / `AUDIT_CrossModel.md` / `H_Paper_Writing.md` workflow. Every finding below was verified against the manuscript, the result JSONs, or the code; refuted findings are dropped.
 
