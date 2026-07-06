@@ -1,0 +1,53 @@
+{
+  "backend": "fast precision recovery (G=I-ACE^-1), inspre-family",
+  "sizes": [
+    1000,
+    1500
+  ],
+  "seeds": [
+    42
+  ],
+  "min_cells": 50,
+  "results": {
+    "1000": {
+      "n_genes": 1000,
+      "anchored_edges": 14953,
+      "anchor_perts": 1000,
+      "edge_budget": 14953,
+      "conditions": {
+        "real_data": {
+          "f1": 0.0068,
+          "precision": 0.0068,
+          "recall": 0.0068,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 0.46
+        },
+        "elastic_net": {
+          "f1": 0.0001,
+          "precision": 0.0001,
+          "recall": 0.0001,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 0.01
+        },
+        "overlay_resampled_real": {
+          "f1": 0.0227,
+          "precision": 0.0227,
+          "recall": 0.0227,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 1.51
+        }
+      },
+      "seeds": {},
+      "perm_null": {
+        "mean": 0.0206,
+        "sd": 0.0055,
+        "p975": 0.0305,
+        "n": 30
+      },
+      "real_above_null": false
+    }
+  }
+}

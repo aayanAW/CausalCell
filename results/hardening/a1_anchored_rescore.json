@@ -1,0 +1,189 @@
+{
+  "ground_truth": "perturbation_anchored_k562_n200 (primary q0.05/fc0.5, 1663 edges)",
+  "circular_gt_overlap": {
+    "jaccard": 0.0173,
+    "overlap": 49,
+    "n_anchored": 1663,
+    "n_circular": 1220
+  },
+  "copartition_ceiling": {
+    "mean": 0.0961,
+    "sd": 0.0118
+  },
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1024
+  ],
+  "raw_anchored": {
+    "real_data": {
+      "f1_mean": 0.0314,
+      "f1_sd": 0.004,
+      "prec_mean": 0.0372,
+      "rec_mean": 0.0272,
+      "n_seeds": 5,
+      "per_seed": [
+        0.034,
+        0.0327,
+        0.0353,
+        0.0251,
+        0.0301
+      ]
+    },
+    "overlay_resampled_real": {
+      "f1_mean": 0.0329,
+      "f1_sd": 0.0058,
+      "prec_mean": 0.0387,
+      "rec_mean": 0.0286,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0347,
+        0.0328,
+        0.0318,
+        0.0245,
+        0.0406
+      ]
+    },
+    "elastic_net": {
+      "f1_mean": 0.0327,
+      "f1_sd": 0.0044,
+      "prec_mean": 0.0383,
+      "rec_mean": 0.0286,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0319,
+        0.0382,
+        0.0345,
+        0.0262,
+        0.0329
+      ]
+    },
+    "cpa_real": {
+      "f1_mean": 0.0359,
+      "f1_sd": 0.0057,
+      "prec_mean": 0.042,
+      "rec_mean": 0.0314,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0394,
+        0.0405,
+        0.0378,
+        0.0263,
+        0.0357
+      ]
+    },
+    "gears_real": {
+      "f1_mean": 0.0358,
+      "f1_sd": 0.0057,
+      "prec_mean": 0.0422,
+      "rec_mean": 0.0311,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0364,
+        0.0398,
+        0.0338,
+        0.0272,
+        0.0419
+      ]
+    },
+    "geneformer_real": {
+      "f1_mean": 0.0352,
+      "f1_sd": 0.0045,
+      "prec_mean": 0.0413,
+      "rec_mean": 0.0307,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0333,
+        0.0362,
+        0.0379,
+        0.0285,
+        0.04
+      ]
+    },
+    "grnboost2": {
+      "f1_mean": 0.0664,
+      "f1_sd": 0.0027,
+      "prec_mean": 0.056,
+      "rec_mean": 0.0817,
+      "n_seeds": 5,
+      "per_seed": [
+        0.0639,
+        0.0705,
+        0.0679,
+        0.0647,
+        0.0651
+      ]
+    }
+  },
+  "partition_fair": {
+    "real_data": {
+      "mean": 0.0321,
+      "sd": 0.0277,
+      "per_seed": [
+        0.0075,
+        0.0649,
+        0.0581,
+        0.0076,
+        0.0221
+      ]
+    },
+    "overlay_resampled_real": {
+      "mean": 0.0288,
+      "sd": 0.0078,
+      "per_seed": [
+        0.0301,
+        0.0314,
+        0.0161,
+        0.0375,
+        0.0289
+      ]
+    },
+    "elastic_net": {
+      "mean": 0.034,
+      "sd": 0.0101,
+      "per_seed": [
+        0.0226,
+        0.05,
+        0.0321,
+        0.0299,
+        0.0357
+      ]
+    },
+    "cpa_real": {
+      "mean": 0.0285,
+      "sd": 0.0163,
+      "per_seed": [
+        0.015,
+        0.05,
+        0.0415,
+        0.0144,
+        0.0216
+      ]
+    },
+    "gears_real": {
+      "mean": 0.0313,
+      "sd": 0.0106,
+      "per_seed": [
+        0.03,
+        0.0376,
+        0.0328,
+        0.0143,
+        0.042
+      ]
+    },
+    "geneformer_real": {
+      "mean": 0.0317,
+      "sd": 0.0073,
+      "per_seed": [
+        0.0301,
+        0.038,
+        0.0398,
+        0.0221,
+        0.0286
+      ]
+    }
+  },
+  "note": "Against non-circular anchored GT even REAL data F1=0.031 (28% of the 9.6% partition ceiling). No condition separates from real or from ElasticNet; instrument does not resolve predictor quality against real biology (confirms S1 saturation + S2 circularity)."
+}
