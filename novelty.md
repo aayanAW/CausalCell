@@ -56,6 +56,17 @@ findings — all three flagged that verdicts were being **over-stated**, in diff
    marginal-mean non-additivity (honest, data-level claim). If it collapses toward additive's 0.036,
    the advantage was joint structure the cell-path reads — a separate, surprising finding.
 
+4. **[ml_reviewer must-check, now answered] Bypass-overlay verification.** The ML reviewer required
+   that before killing Track-B by mechanism, we confirm the "provably blind" claim on the path that
+   bypasses the overlay (discovery on predicted **cells** directly). Two answers now on record: (a) the
+   Wall-1 verification's **Part 3** shows two predictions with identical per-gene means but 14.8×
+   different joint structure yield an *identical* recovered support (Jaccard 1.0, max|Δcorr|=0) — the
+   mean-path reduces any prediction to its mean before the metric; (b) the **instrument-fix** already
+   fed real *cells* directly (the only genuine overlay bypass) and is **null** on RPE1+Norman. So the
+   Track-B/architecture KILLs rest on the 5-seed empirical DISCARD **and** a tested bypass, not on an
+   untested assertion. This is the honest scope: Wall-1 binds the overlay path (verified) and the cell
+   bypass is separately null (Wall-2, empirical).
+
 ## Verdict per change (the gate)
 
 | # | Change | Gate verdict | Reason |
