@@ -41,6 +41,16 @@ equivalence-vs-gap decomposition.
 (sanity checks reproduce locked numbers; TOST; mean-fidelity 1.2% vs 13.9%). Points to released scripts
 and JSON.
 
+**6. Intro contributions + conclusion aligned (second pass).** The first pass updated abstract /
+Discussion / lemma / A3 section / appendix but left the intro contribution bullets and the conclusion
+on the pre-reframe framing. Fixed: (a) bullet on the diagnostic decomposition now cites *both*
+Prop~\ref{prop:ci-invariance} (per-gene monotone) *and* the stronger Lemma~\ref{lem:overlay-invariance}
+(mean-only); (b) added a new contribution bullet for the invariance lemma + A3 positive control; (c) the
+conclusion's "closing the gap calls for a training-time intervention" — which the lemma contradicts —
+rewritten to "progress requires moving the *evaluation channel* (score predicted cells with covariance
+intact), not just the training loss," consistent with the covariance-regularizer null. This removes the
+last internal inconsistency between the paper's body and its framing.
+
 ## Honest Wall-2 status preserved
 The reframe does NOT upgrade Wall-2 (real cells also don't recover the anchored graph above chance at
 genome scale) to a theorem. Wall-1 is the proved invariance (harness property); Wall-2 remains the
