@@ -104,13 +104,21 @@ Virtual cell models (VCMs) are deep networks that predict transcriptional respon
 \section{Introduction}
 \label{sec:intro}
 
+\begin{figure*}[t]
+\begin{center}
+\includegraphics[width=0.95\textwidth]{figs/fig_overview.png}
+\end{center}
+\caption{\textbf{The substitutability question.} Real Perturb-seq (top) obtains an expression matrix from a costly pooled CRISPR screen; a virtual cell model (bottom) predicts one in silico from a perturbation input. PerturbCausal holds the causal-discovery algorithm fixed (here GIES) and asks whether the network it recovers from \emph{predicted} data matches the network it recovers from \emph{real} data---i.e.\ whether the cheap in-silico matrix can substitute for the expensive real one one step downstream, in gene-regulatory-network recovery. Across every VCM, discovery backend, and dataset we test, it cannot; \S\ref{sec:scope} scopes this claim precisely.}
+\label{fig:overview}
+\end{figure*}
+
 Virtual cell models (VCMs) predict cellular responses to genetic perturbations and are proposed as computational substitutes for CRISPR screens that cost millions of dollars per cell line~\citep{replogle2022,bunne2024}. The dominant evaluation paradigm---exemplified by PerturBench~\citep{wu2024perturbench}, the Virtual Cell Challenge~\citep{roohani2025vcc}, and the Ahlmann-Eltze \& Huber comparison~\citep{ahlmanneltze2025}---measures per-gene reconstruction accuracy of predicted transcriptional responses. Across these benchmarks, deep learning methods including graph neural networks (GEARS;~\citealt{roohani2024gears}), conditional variational autoencoders (CPA;~\citealt{lotfollahi2023cpa}), and pretrained foundation transformers (Geneformer, scGPT;~\citealt{theodoris2023geneformer,cui2024scgpt}) consistently fail to outperform simple linear baselines on the marginal-prediction task.
 
 Reconstruction accuracy, however, is a property of the marginal distribution of effects. The downstream applications that motivate VCM development---combination perturbation prediction, drug target identification, and gene regulatory network (GRN) inference---depend on the joint distribution of effects across genes~\citep{chevalley2025causalbench,vc_causal_2025}. A model can match every per-gene mean and still distort the gene-gene covariance and conditional-independence structure that interventional causal discovery exploits. CausalBench evaluates causal discovery algorithms on real Perturb-seq data~\citep{chevalley2025causalbench} but does not test whether VCM predictions can substitute for that real data in the same pipeline. A NeurIPS 2025 perspective paper called explicitly for causal-recovery evaluation of VCMs but did not implement one~\citep{vc_causal_2025}.
 
 Adjacent recent work has surfaced relevant pieces. \citet{mejia2025diversity} identified mode collapse in scRNA-seq perturbation models---predictions reverting to the dataset mean---and proposed weighted training losses. \citet{miller2025calibrated} argued that conventional perturbation prediction metrics are poorly calibrated and proposed metric calibration via interpolated-duplicate baselines. \citet{brown2025inspre} introduced inspre, a sparse inverse regression algorithm for large-scale causal discovery from interventional data. None of these works has integrated VCM predictions into a downstream causal discovery pipeline to test the substitutability hypothesis directly.
 
-We close this gap. The contributions of this paper are:
+We close this gap (Figure~\ref{fig:overview}). The contributions of this paper are:
 \begin{enumerate}
 \item \textbf{A causal-recovery substitutability benchmark for VCMs.} Predictions from four VCMs (GEARS, CPA, Geneformer, STATE) and a sparse linear comparator are passed through four causal-discovery backends (GIES~\citep{hauser2012gies}, inspre~\citep{brown2025inspre}, PC, NOTEARS) on three Perturb-seq datasets spanning cell context (K562, RPE1) and perturbation paradigm (CRISPRi, CRISPRa)~\citep{replogle2022,norman2019}, and the recovered graphs are compared against per-backend real-data ground truth. No deep model exceeds the linear comparator on any backend or dataset evaluated, and none reaches real-data quality.
 \item \textbf{A diagnosis of the failure mode.} All three deep models inflate predicted effect-size distributions by a factor of approximately 23 relative to real biology. The inflation magnitudes are identical to within 0.3 percentage points across radically different architectures (GNN, VAE, transformer), arguing the failure is objective-driven (per-gene MSE) rather than architecture-driven.
@@ -239,7 +247,7 @@ Random bootstrap (floor)       & $\approx 0.04$  & ---             & ---        
 \end{table*}
 
 \subsection{Effect-size inflation across architectures}
-Real K562 perturbation responses at the full transcriptome scope are sparse: 2.7\% of (perturbation, gene) effects exceed $|\log_2 \mathrm{FC}| = 0.5$, and the leading singular vector of the perturbation-response matrix captures 56.8\% of total variance. All three deep models produce predictions in which the corresponding fraction is 63.2\% (GEARS), 63.4\% (CPA), and 63.5\% (Geneformer)---a 23-fold inflation that is identical across architectures to within 0.3 percentage points (Figure~\ref{fig:inflation}). Mean per-perturbation $L_1$ norm of predicted shifts is approximately tenfold larger than empirical: real K562 mean $L_1 = 22.8$; GEARS $= 226.9$; CPA $= 226.6$; Geneformer $= 227.4$.
+Real K562 perturbation responses at the full transcriptome scope are sparse: 2.7\% of (perturbation, gene) effects exceed $|\log_2 \mathrm{FC}| = 0.5$, and the leading singular vector of the perturbation-response matrix captures 56.8\% of total variance. All three deep models produce predictions in which the corresponding fraction is 63.2\% (GEARS), 63.4\% (CPA), and 63.5\% (Geneformer)---a 23-fold inflation that is identical across architectures to within 0.3 percentage points (Figure~\ref{fig:inflation}; schematic in Figure~\ref{fig:modecollapse_schematic}). Mean per-perturbation $L_1$ norm of predicted shifts is approximately tenfold larger than empirical: real K562 mean $L_1 = 22.8$; GEARS $= 226.9$; CPA $= 226.6$; Geneformer $= 227.4$.
 
 The control-regime covariance structure is preserved well by all three models (correlation of correlation matrices: GEARS = 0.967, CPA = 0.996, Geneformer = 0.996), indicating that deep models have learned baseline gene-gene relationships in unperturbed cells but fail to predict sparse, structured deviations from baseline upon perturbation.
 
@@ -850,6 +858,14 @@ To localize the substitutability gap to a specific architectural component, six 
 \caption{Six-variant CPA architectural ablation on K562 at $N{=}200$, seed 42, partition size 20, against real-data GIES ground truth (1{,}220 edges). All other hyperparameters are held at the vanilla CPA baseline (\texttt{n\_latent=64}, encoder layers $=3$, decoder layers $=3$, batch-norm, NB reconstruction loss, adversarial covariate disentanglement, max\_epochs $=300$).}
 \label{tab:ablation_cpa}
 \end{table}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=\columnwidth]{figs/fig_modecollapse_schematic.png}
+\end{center}
+\caption{\textbf{Mode collapse as an objective-level, architecture-independent failure} (schematic companion to Figure~\ref{fig:inflation} and Table~\ref{tab:ablation_cpa}). Real perturbation responses are sparse---only $2.7\%$ of (perturbation, gene) effects are strong (left, teal). Deep VCM predictions inflate this to $\approx 63\%$ (right, vermillion), a $\sim$$23$-fold inflation that is nearly identical across perturbations and identical to within $0.3$ percentage points across GEARS (GNN), CPA (VAE), and Geneformer (transformer)---indicating the failure is driven by the shared training objective rather than architecture, consistent with the ablation above.}
+\label{fig:modecollapse_schematic}
+\end{figure}
 
 \subsection{External validation of the ground truth against TRRUST}
 \label{app:trrust}
