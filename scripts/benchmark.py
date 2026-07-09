@@ -4,8 +4,8 @@ Runs all model wrappers in isolated conda environments, then
 evaluates their predictions through causal discovery algorithms.
 
 Usage:
-    python benchmark.py --cell-line k562 --n-genes 500 --seed 0
-    python benchmark.py --cell-line k562 --n-genes 200 --pilot  # Gate 0
+    python scripts/benchmark.py --cell-line k562 --n-genes 500 --seed 0
+    python scripts/benchmark.py --cell-line k562 --n-genes 200 --pilot  # Gate 0
 """
 
 from __future__ import annotations
@@ -14,8 +14,6 @@ import argparse
 import json
 import logging
 import subprocess
-import sys
-import time
 from pathlib import Path
 
 import numpy as np
@@ -59,21 +57,36 @@ def run_model(
 ) -> bool:
     """Run a single model in its isolated conda environment."""
     cmd = [
-        "conda", "run", "-n", config["env"],
-        "python", config["script"],
-        "--input", input_path,
-        "--output", output_path,
-        "--genes", ",".join(genes),
+        "conda",
+        "run",
+        "-n",
+        config["env"],
+        "python",
+        config["script"],
+        "--input",
+        input_path,
+        "--output",
+        output_path,
+        "--genes",
+        ",".join(genes),
     ] + config.get("extra_args", [])
 
     logger.info("Running %s: %s", model_name, " ".join(cmd[:6]) + " ...")
 
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=3600,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=3600,
         )
         if result.returncode != 0:
-            logger.error("%s FAILED (exit %d):\n%s", model_name, result.returncode, result.stderr[-500:])
+            logger.error(
+                "%s FAILED (exit %d):\n%s",
+                model_name,
+                result.returncode,
+                result.stderr[-500:],
+            )
             return False
         logger.info("%s completed successfully", model_name)
         return True
@@ -95,7 +108,6 @@ def run_baselines(
     """Run lightweight baselines (Elastic Net, Random) in eval env."""
     import anndata as ad
     from causalcellbench.models.baselines import ElasticNetBaseline, RandomBaseline
-    from causalcellbench.data.replogle import extract_control_cells
     import pandas as pd
 
     control = ad.read_h5ad(input_path)
@@ -156,7 +168,6 @@ def run_evaluation(
     import anndata as ad
     from causalcellbench.causal.causalbench_bridge import build_from_disk
     from causalcellbench.causal.gies_runner import run_gies
-    from causalcellbench.eval.auprc import compute_auprc, compute_random_auprc
 
     control = ad.read_h5ad(control_path)
     all_results = {}
@@ -170,6 +181,7 @@ def run_evaluation(
         tmp_dir = Path(results_dir) / f"_tmp_{model_name}"
         tmp_dir.mkdir(exist_ok=True)
         import shutil
+
         shutil.copy(h5ad_path, tmp_dir / h5ad_path.name)
 
         try:
@@ -211,7 +223,9 @@ def main():
     parser.add_argument("--n-cells", type=int, default=100)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--results-dir", default="results")
-    parser.add_argument("--pilot", action="store_true", help="Gate 0 pilot (200 genes, 3 models)")
+    parser.add_argument(
+        "--pilot", action="store_true", help="Gate 0 pilot (200 genes, 3 models)"
+    )
     parser.add_argument("--models", nargs="*", help="Specific models to run")
     args = parser.parse_args()
 
@@ -243,7 +257,9 @@ def main():
 
     control_path = str(results_dir / "control.h5ad")
     control.write_h5ad(control_path)
-    logger.info("Control: %d cells. Gene subset: %d genes.", control.n_obs, len(gene_subset))
+    logger.info(
+        "Control: %d cells. Gene subset: %d genes.", control.n_obs, len(gene_subset)
+    )
 
     # Step 2: Run models
     logger.info("Step 2: Running models...")
@@ -264,7 +280,11 @@ def main():
     # Step 4: Evaluate
     logger.info("Step 4: Evaluating...")
     eval_results = run_evaluation(
-        str(results_dir), control_path, gene_subset, args.n_cells, args.seed,
+        str(results_dir),
+        control_path,
+        gene_subset,
+        args.n_cells,
+        args.seed,
     )
 
     # Step 5: Save summary
