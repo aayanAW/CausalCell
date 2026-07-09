@@ -142,3 +142,20 @@ Filed after a 4-agent self-check (logic / requirements / integration / leakage) 
 **A6 — Reporting.** `pc_grid.json` now stores per-seed arrays, precision/recall, and predicted-edge counts for every (stratum, N, seed, estimand, condition, {in_sample, cross_split}); `pc_summary.md` (scorecard + branch verdict) and `figs/pc_real_vs_null_by_stratum.png` are written.
 
 **Decision rule (restated, cross-split):** Branch **A** iff ≥1 (stratum, N) CROSS-SPLIT matched-estimand gate passes cond1–4 and survives BH-FDR q=0.05; **C_inversion** iff a cross-split gate clears cond1+cond2 but real ≤ overlay; **B** (modal) iff no cross-split gate passes across the full locked grid. Report whichever obtains, honestly.
+
+---
+
+## AMENDMENT 2 — 2026-07-08 (falsification battery; predictions pre-committed BEFORE running)
+
+A hostile-reviewer self-check REFUTED the smoke Branch-A pass. The refutation: the cross-split certifies split-half **reliability of the marginal perturbation-effect matrix** Δ(A,B)=E[X_B|do A]−E[X_B|ctrl] — both the GT (=threshold(Δ̂_H1)) and the matched estimand (=Δ̂_H2) estimate the SAME Δ on disjoint samples — NOT causal-structure recovery. Corroborating in-data evidence: in-sample 0.441 ≈ cross-split 0.433 (the split cost only 0.008, so it broke nothing); overlay 0.423 ≈ real 0.433 (gap = exactly MDE, so ~all signal is in the per-gene means); the corr guard (0.117) is a symmetric-co-expression strawman vs a directed DE-anchored GT. Before ANY manuscript reframe, run the battery below. Predictions are locked now.
+
+**F1 — DE-baseline (does the "matched causal estimand" beat a plain two-sample test?).** New condition `de_tstat`: rank (A,B) by |Welch-t of B under A-KO on H2|, score vs GT_total_H1; cond5 := real|ACE| > de_tstat by > MDE. **Prediction: TIE (cond5 fails)** — |ACE| is itself a DE effect size, so it adds nothing over a t-test.
+
+**F2 — Direct-edge GT (does ANYTHING recover DIRECT causal edges above chance?).** Build GT_direct_H1 two imperfect (cyclic-caveated) ways: (a) transitive reduction of GT_total_H1 — drop (A,C) if a 2-hop path A→B→C exists in the GT; (b) TRRUST-curated directed edges ∩ panel. Re-score real|ACE_H2| + the same col-permute null vs each. **Prediction: real COLLAPSES toward the null on direct-edge GT (real_above_null=False)** — only reachability/total-effect is recoverable, not direct causal structure.
+
+**F3 — Substitutability + inversion (do VCMs tie real?).** Add real VCM arms (CPA/GEARS/Geneformer cached N=200 predicted means → predicted total-effect ACE = pred_mean − real ctrl mean), scored vs GT_total_H1 and GT_direct_H1, cross-split. **Prediction: on GT_total, VCM ≈ overlay ≈ real (INVERSION — substitutable but trivial, because it is the reproducible mean/reachability channel); on GT_direct, VCM ≈ real ≈ null (both at the floor — causal structure not substitutable because not recoverable at all).**
+
+**Pre-committed branch mapping:**
+- **Branch B-bifurcated (modal prediction):** F1 ties ∧ F2 collapses ∧ F3 shows VCM≈real on total but all≈null on direct → the honest paper is: *reachability/total-effect structure is reproducibly recoverable from real Perturb-seq, but it is a per-gene DE test that mode-collapsed mean-emitting VCMs recover equally well (substitutable-but-trivial); DIRECT causal-structure recovery sits at the permutation floor for real and predicted data alike (unidentifiable at achievable SNR).* The apparent "positive control" is a reliability coefficient, not causal discovery.
+- **Branch A (survives):** F2 real clears the direct-edge null by > MDE ∧ F1 cond5 passes → a genuine causal positive control exists; the VCM substitutability comparison is then meaningful inside that window.
+- Report whichever the data selects. Do NOT reframe the manuscript until this battery has run and been read.
