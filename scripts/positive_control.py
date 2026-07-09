@@ -113,10 +113,11 @@ def summ(v) -> dict:
 
 
 # ----------------------------------------------------------------------------- data
-def load_pool(pool_size: int, cap_cells: int, ctrl_cap: int):
+def load_pool(pool_size: int, cap_cells: int, ctrl_cap: int, force_genes=None):
     """One atlas read. Top-`pool_size` perts (>=MIN_CELLS) as a dense (cells x genes)
     matrix with <=cap_cells per pert and <=ctrl_cap controls, plus per-pert on-target
-    log2FC and cell counts for stratum selection."""
+    log2FC and cell counts for stratum selection. `force_genes` (optional) are
+    additionally included if measured & >=MIN_CELLS (e.g. the VCM-predicted pert set)."""
     a = ad.read_h5ad(ATLAS, backed="r")
     labels = a.obs[PERT_COL].astype(str).values
     sym = a.var["gene_name"].astype(str).values
@@ -133,7 +134,14 @@ def load_pool(pool_size: int, cap_cells: int, ctrl_cap: int):
         if g != CTRL and c >= MIN_CELLS and g in measured
     ]
     cand.sort(key=lambda x: -x[1])
-    genes = sorted(g for g, _ in cand[:pool_size])
+    chosen = set(g for g, _ in cand[:pool_size])
+    if force_genes:
+        chosen |= {
+            g
+            for g in force_genes
+            if g in measured and counts.get(g, 0) >= MIN_CELLS and g != CTRL
+        }
+    genes = sorted(chosen)
     col_idx = [sym_to_col[g] for g in genes]
 
     rng = np.random.default_rng(0)
@@ -433,8 +441,9 @@ def score_block(Xp, labp, panel, seeds, n_perm, split: bool):
                     edges_from_matrix(col_permute(ace_real, prng), panel, budget), gt
                 )[0]
             )
-        if si == 0:
-            # baselines on this block's seed-0 configuration
+        if not base:
+            # baselines on the FIRST seed that yields a non-empty GT (guards vs empty
+            # seed-0 GT in the cross-split path, which previously KeyError'd downstream)
             idx = np.arange(len(labp)) if ace_ref_rows is None else ace_ref_rows
             lab_s = labp[idx]
             ctrl_X = Xp[idx][lab_s == CTRL]
