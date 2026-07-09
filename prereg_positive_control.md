@@ -119,3 +119,26 @@ Strata (the perturbation/gene-selection rule for the panel), all pre-declared:
 - Figures: `figs/pc_real_vs_null_by_stratum.png`.
 
 **Honesty clause:** if the modal Branch B obtains, it is reported as the finding, not hidden. "10 seeds × 10 gates, no matched-estimand stratum cleared the null after FDR" is a valid, publishable outcome.
+
+---
+
+## AMENDMENT 1 — 2026-07-08 (before the confirmatory run; all changes STRENGTHEN rigor)
+
+Filed after a 4-agent self-check (logic / requirements / integration / leakage) of `scripts/positive_control.py` and a 1-seed in-sample smoke. The smoke showed the **estimand match** lifts real F1 from ~0.03 (below null, mismatched precision estimand) to ~0.52 (3× above null, matched total-effect estimand) — but the self-check flagged that in-sample `real > null` is **near-tautological** (the anchored GT is a thresholded copy of the same do(A)→B shift the estimand ranks, on the same cells). These amendments make the positive control defensible. None loosens a criterion; the cross-split is strictly harder to pass.
+
+**A1 — CELL-SPLIT is now the PRIMARY Branch-A test (decisive).** Per seed, each perturbation's cells and the control pool are randomly partitioned into two disjoint halves H1, H2 (`rng(seed)`). The anchored GT is built on **H1**; every ACE (real / overlay / elastic / corr) is estimated on **H2**; edges from H2 are scored against the H1 GT. This breaks the same-data alignment, so **cond1 (real > null) is load-bearing again** and measures whether the total-effect structure is *reproducible across disjoint cell samples* (the honest test-retest, analogous to the paper's technical-duplicate F1=0.045 for the direct-edge path). **Branch A requires the CROSS-SPLIT gate to pass all four conditions + FDR.** The in-sample version (GT+ACE on the same cells) is retained only as a labeled UPPER-BOUND reference and can never declare a pass.
+
+**A2 — Full-power cells (removes the Branch-B confound).** `cap_cells` raised 400→2000 (rarely binds; high-coverage perts keep their SNR) and the GT/ACE use **all** non-targeting controls (~10,691), not a 3,000 cap — so a Branch-B ("no identifiable window at *achievable* SNR") verdict cannot be an artifact of a memory cap. Splits/bootstraps are re-drawn per seed, so the across-seed CI includes split/selection variance.
+
+**A3 — Stricter correlational guard.** cond4 now requires real ≥ **both** control-only co-expression (the pre-registered GRNBoost2-family baseline) **and** all-cell co-expression (the stronger, GRNBoost2-exact analog). A stratum is disqualified if *either* correlational baseline meets/beats the matched causal estimand on real data.
+
+**A4 — Estimand/budget/BH clarifications (documentation of what the code does).**
+- Edge budget = **len(GT)** exactly (the off-by-one in top-budget thresholding is fixed so the emitted edge count equals the budget); the 200-edge floor is dropped. A gate with GT < 50 edges is reported but flagged low-power and cannot declare A.
+- The permutation null is the pooled set of `n_perm × n_seed` column-shuffles of each seed's real ACE (≥ 50 × 10), each scored through the identical matched estimand and budget. This is a strengthening (more null draws), not a change of null object.
+- BH-FDR uses correct step-up (this fixes a latent naive-BH bug present in the committed `genome_scale_precision.py`; GT edge sets are therefore a superset and absolute magnitudes are **not** claimed identical to the paper's genome-scale numbers — the positive control's validity is internal: real vs its own matched null on the same data).
+
+**A5 — S3 (TF-anchored) definition.** Panel = perturbed TRRUST TFs that have ≥1 TRRUST target also perturbed-in-pool, unioned with those in-pool targets, top-N by cell count. This realizes the prereg's "in-panel curated target" intent and attacks essential-gene pleiotropy with genuine curated regulatory edges. If < 20 genes qualify, S3 is skipped (reported, not silent).
+
+**A6 — Reporting.** `pc_grid.json` now stores per-seed arrays, precision/recall, and predicted-edge counts for every (stratum, N, seed, estimand, condition, {in_sample, cross_split}); `pc_summary.md` (scorecard + branch verdict) and `figs/pc_real_vs_null_by_stratum.png` are written.
+
+**Decision rule (restated, cross-split):** Branch **A** iff ≥1 (stratum, N) CROSS-SPLIT matched-estimand gate passes cond1–4 and survives BH-FDR q=0.05; **C_inversion** iff a cross-split gate clears cond1+cond2 but real ≤ overlay; **B** (modal) iff no cross-split gate passes across the full locked grid. Report whichever obtains, honestly.
