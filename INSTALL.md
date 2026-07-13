@@ -35,5 +35,4 @@ python3 -c "import transformers, os, re; \
 ```
 
 This works around a known incompatibility between transformers 4.52.3 and Modal
-container runtimes (see ARCHITECTURE_V4_AUDIT_AND_UPGRADE.md and the STATE
-appendix of the manuscript).
+container runtimes (see the STATE appendix of the manuscript).
