@@ -1,0 +1,1 @@
+{"pert_encoder": {"<PAD>": 0, "non-targeting": 1, "GENE0": 2, "GENE1": 3, "GENE2": 4, "GENE3": 5, "GENE4": 6}, "covars_encoder": {}, "pert_smiles_map": null}

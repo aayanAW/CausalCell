@@ -1,0 +1,9 @@
+{
+ "source": "label-permutation chance from committed A3 run (results/hardening/a3_combinations.json), not recomputed",
+ "note": "permutation floor = shuffle gene labels of GT, rescore recovered edges (5 seeds). Reported on the PRIMARY within-regime GT (GIES-on-real-doubles). Anchored-GT contrasts (A/B/C) are the discriminator's headline numbers.",
+ "primary_within_regime": {
+   "additive_singles": {"f1_mean": 0.0359, "perm_chance_mean": 0.05339},
+   "real_doubles": {"f1_mean": 0.0552, "perm_chance_mean": 0.07951}
+ },
+ "caveat": "The primary within-regime GT has HIGH permutation chance (compressed dynamic range: 20-gene partitions cap co-partition recall ~9.6%). The decisive discriminator contrast is B-vs-C on the ANCHORED GT (equivalence-certified, TOST p=0.001), which is independent of this floor."
+}

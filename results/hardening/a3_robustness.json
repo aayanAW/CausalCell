@@ -1,0 +1,10 @@
+{
+ "TOST_BvsC": {"mean_diff": -0.00136, "sd": 0.002829, "ci95": [-0.004872, 0.002152],
+   "equivalence_margin": 0.01035, "TOST_p": 0.001036, "verdict": "EQUIVALENT",
+   "MDE_at_n5": 0.004703, "AB_gap": 0.0207, "powered": true},
+ "AvsB_paired": {"t": 12.764, "p": 0.000217, "n": 5},
+ "mean_fidelity": {"B_overlay_realized_vs_A_realmean_reldev_mean": 0.0124, "median": 0.0035,
+   "real_double_mean_vs_additive_mean_reldev_mean": 0.1391, "median_": 0.1296,
+   "note": "B preserves A's real means to ~1%; real vs additive means differ 14% yet B~=C"},
+ "scope_correction": "A-B channel = cell-level joint distribution (covariance + higher moments), not covariance exclusively; B-vs-C equivalence (unconstructed contrast) carries the not-in-means claim"
+}

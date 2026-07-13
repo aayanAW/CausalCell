@@ -1,0 +1,74 @@
+{
+  "data": "k562_subset_n200_slim.h5ad",
+  "n_genes": 200,
+  "n_cells": 400,
+  "seed": 42,
+  "part1_deterministic": {
+    "max_abs_delta_corr": 2.0702293268559657e-08,
+    "precision_support_jaccard": 1.0,
+    "n_support_edges_pred1": 21926,
+    "n_support_edges_pred2": 21926,
+    "claim": "exact invariance: corr identical to machine precision, support Jaccard==1"
+  },
+  "part2_poisson_sweep": [
+    {
+      "depth_factor": 0.25,
+      "mean_counts_per_cell": 581.885009765625,
+      "max_abs_delta_corr": 0.3766710960145396,
+      "support_jaccard": 0.33412114254845027,
+      "edge_flip_fraction": 0.4955276381909548
+    },
+    {
+      "depth_factor": 0.5,
+      "mean_counts_per_cell": 1160.33251953125,
+      "max_abs_delta_corr": 0.31006917384195626,
+      "support_jaccard": 0.336786525865526,
+      "edge_flip_fraction": 0.498643216080402
+    },
+    {
+      "depth_factor": 1.0,
+      "mean_counts_per_cell": 2320.577392578125,
+      "max_abs_delta_corr": 0.2892116827487371,
+      "support_jaccard": 0.35307209819923113,
+      "edge_flip_fraction": 0.48201005025125626
+    },
+    {
+      "depth_factor": 2.0,
+      "mean_counts_per_cell": 4636.20751953125,
+      "max_abs_delta_corr": 0.25129576412089055,
+      "support_jaccard": 0.38301654587720496,
+      "edge_flip_fraction": 0.4534673366834171
+    },
+    {
+      "depth_factor": 4.0,
+      "mean_counts_per_cell": 9277.947265625,
+      "max_abs_delta_corr": 0.18577681085689035,
+      "support_jaccard": 0.44369899017844794,
+      "edge_flip_fraction": 0.4041708542713568
+    },
+    {
+      "depth_factor": 8.0,
+      "mean_counts_per_cell": 18551.96484375,
+      "max_abs_delta_corr": 0.15380043208172114,
+      "support_jaccard": 0.5136354027200338,
+      "edge_flip_fraction": 0.3468341708542714
+    }
+  ],
+  "part3_same_mean_diff_joint": {
+    "input_mean_max_abs_diff": 6.821210263296962e-13,
+    "pred_offdiag_corr_hi": 0.2610522173364844,
+    "pred_offdiag_corr_lo": 0.01764845443961648,
+    "pred_joint_structure_ratio": 14.791789175061462,
+    "overlay_support_jaccard": 1.0,
+    "max_abs_delta_corr": 0.0,
+    "claim": "two predictions with the SAME per-gene mean but 14.8x different joint structure yield the SAME overlay support -> the metric cannot reward Track-B's joint-structure reshaping"
+  },
+  "verdict": {
+    "deterministic_support_exact": true,
+    "deterministic_corr_float32": true,
+    "deterministic_exact": true,
+    "poisson_residual_decreases": true,
+    "poisson_residual_at_realistic_depth": 0.48201005025125626,
+    "note": "Lemma: prediction enters ONLY as a per-gene mean; deterministic rescale leaves precision-support exactly invariant (Jaccard=1, corr equal to float32 epsilon). Poisson adds a mean-dependent residual that is substantial at realistic depth and vanishes only as counts->inf; crucially it still depends on the prediction ONLY through per-gene means, never joint structure."
+  }
+}

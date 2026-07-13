@@ -1,0 +1,24 @@
+{
+  "phases": {
+    "f1_phase4_gies": {
+      "status": "completed",
+      "ts": "2026-05-27T02:59:11.941567Z"
+    },
+    "f2_norman_deep": {
+      "status": "smoke_launched",
+      "ts": "2026-05-27T02:59:11.980532Z"
+    },
+    "f3_state_multiseed": {
+      "status": "deferred",
+      "ts": "2026-05-27T02:59:12.000493Z"
+    },
+    "f4_aggregate": {
+      "status": "completed",
+      "ts": "2026-05-27T02:59:12.020424Z"
+    },
+    "f5_final_pdf": {
+      "status": "completed",
+      "ts": "2026-05-27T02:59:15.610820Z"
+    }
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "backend": "fast precision recovery (G=I-ACE^-1), inspre-family",
+  "sizes": [
+    500,
+    1000,
+    1500
+  ],
+  "seeds": [
+    42
+  ],
+  "min_cells": 50,
+  "results": {
+    "500": {
+      "n_genes": 500,
+      "anchored_edges": 6802,
+      "anchor_perts": 500,
+      "edge_budget": 6802,
+      "conditions": {
+        "real_data": {
+          "f1": 0.0346,
+          "precision": 0.0346,
+          "recall": 0.0345,
+          "n_edges": 6801,
+          "random_f1": 0.0273,
+          "f1_over_random": 1.27
+        },
+        "elastic_net": {
+          "f1": 0.0003,
+          "precision": 0.0003,
+          "recall": 0.0003,
+          "n_edges": 6801,
+          "random_f1": 0.0273,
+          "f1_over_random": 0.01
+        },
+        "overlay_resampled_real": {
+          "f1": 0.0559,
+          "precision": 0.0559,
+          "recall": 0.0559,
+          "n_edges": 6801,
+          "random_f1": 0.0273,
+          "f1_over_random": 2.05
+        }
+      },
+      "seeds": {},
+      "perm_null": {
+        "mean": 0.0405,
+        "sd": 0.0137,
+        "p975": 0.0741,
+        "n": 50
+      },
+      "real_above_null": false
+    },
+    "1000": {
+      "n_genes": 1000,
+      "anchored_edges": 14953,
+      "anchor_perts": 1000,
+      "edge_budget": 14953,
+      "conditions": {
+        "real_data": {
+          "f1": 0.0068,
+          "precision": 0.0068,
+          "recall": 0.0068,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 0.46
+        },
+        "elastic_net": {
+          "f1": 0.0001,
+          "precision": 0.0001,
+          "recall": 0.0001,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 0.01
+        },
+        "overlay_resampled_real": {
+          "f1": 0.0227,
+          "precision": 0.0227,
+          "recall": 0.0227,
+          "n_edges": 14952,
+          "random_f1": 0.015,
+          "f1_over_random": 1.51
+        }
+      },
+      "seeds": {},
+      "perm_null": {
+        "mean": 0.0201,
+        "sd": 0.0053,
+        "p975": 0.0306,
+        "n": 50
+      },
+      "real_above_null": false
+    },
+    "1500": {
+      "n_genes": 1500,
+      "anchored_edges": 29689,
+      "anchor_perts": 1500,
+      "edge_budget": 29689,
+      "conditions": {
+        "real_data": {
+          "f1": 0.0125,
+          "precision": 0.0125,
+          "recall": 0.0125,
+          "n_edges": 29688,
+          "random_f1": 0.0132,
+          "f1_over_random": 0.95
+        },
+        "elastic_net": {
+          "f1": 0.0002,
+          "precision": 0.0002,
+          "recall": 0.0002,
+          "n_edges": 29688,
+          "random_f1": 0.0132,
+          "f1_over_random": 0.02
+        },
+        "overlay_resampled_real": {
+          "f1": 0.0184,
+          "precision": 0.0184,
+          "recall": 0.0184,
+          "n_edges": 29688,
+          "random_f1": 0.0132,
+          "f1_over_random": 1.39
+        }
+      },
+      "seeds": {},
+      "perm_null": {
+        "mean": 0.0172,
+        "sd": 0.0053,
+        "p975": 0.0272,
+        "n": 50
+      },
+      "real_above_null": false
+    }
+  }
+}

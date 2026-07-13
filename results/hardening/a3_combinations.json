@@ -1,0 +1,320 @@
+{
+  "meta": {
+    "panel_genes": 71,
+    "n_doubles": 129,
+    "n_doubles_prereg": 131,
+    "n_additive_doubles": 129,
+    "anchored_edges": 2092,
+    "min_cells": 20,
+    "deviation": "kept doubles with both parents measured AND >=MIN_CELLS singles; 131->129 (2 dropped)",
+    "scoring": "PRIMARY=GIES-on-real-doubles (within-regime); SECONDARY=anchored"
+  },
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1024
+  ],
+  "conditions": {
+    "real_doubles": {
+      "anchored": [
+        {
+          "f1": 0.05721830985915493,
+          "precision": 0.3611111111111111,
+          "recall": 0.03107074569789675,
+          "tp": 65,
+          "n_pred": 180
+        },
+        {
+          "f1": 0.048780487804878044,
+          "precision": 0.3374233128834356,
+          "recall": 0.026290630975143402,
+          "tp": 55,
+          "n_pred": 163
+        },
+        {
+          "f1": 0.05173951828724354,
+          "precision": 0.38666666666666666,
+          "recall": 0.027724665391969407,
+          "tp": 58,
+          "n_pred": 150
+        },
+        {
+          "f1": 0.05486725663716814,
+          "precision": 0.36904761904761907,
+          "recall": 0.029636711281070746,
+          "tp": 62,
+          "n_pred": 168
+        },
+        {
+          "f1": 0.06339285714285714,
+          "precision": 0.4797297297297297,
+          "recall": 0.033938814531548754,
+          "tp": 71,
+          "n_pred": 148
+        }
+      ],
+      "primary": [
+        {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 180,
+          "n_pred": 180
+        },
+        {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 163,
+          "n_pred": 163
+        },
+        {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 150,
+          "n_pred": 150
+        },
+        {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 168,
+          "n_pred": 168
+        },
+        {
+          "f1": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 148,
+          "n_pred": 148
+        }
+      ],
+      "primary_chance": [
+        {
+          "f1": 0.07303370786516852,
+          "precision": 0.07222222222222222,
+          "recall": 0.07386363636363637,
+          "tp": 13,
+          "n_pred": 180
+        },
+        {
+          "f1": 0.09968847352024922,
+          "precision": 0.09815950920245399,
+          "recall": 0.10126582278481013,
+          "tp": 16,
+          "n_pred": 163
+        },
+        {
+          "f1": 0.06779661016949153,
+          "precision": 0.06666666666666667,
+          "recall": 0.06896551724137931,
+          "tp": 10,
+          "n_pred": 150
+        },
+        {
+          "f1": 0.060790273556231005,
+          "precision": 0.05952380952380952,
+          "recall": 0.062111801242236024,
+          "tp": 10,
+          "n_pred": 168
+        },
+        {
+          "f1": 0.09621993127147767,
+          "precision": 0.0945945945945946,
+          "recall": 0.0979020979020979,
+          "tp": 14,
+          "n_pred": 148
+        }
+      ],
+      "n_edges": [
+        180,
+        163,
+        150,
+        168,
+        148
+      ],
+      "summary": {
+        "anchored_f1_mean": 0.05519968594626036,
+        "anchored_f1_sd": 0.0055788052262744515,
+        "anchored_per_seed": [
+          0.0572,
+          0.0488,
+          0.0517,
+          0.0549,
+          0.0634
+        ],
+        "primary_f1_mean": 1.0,
+        "primary_f1_sd": 0.0,
+        "primary_per_seed": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "primary_chance_mean": 0.07950579927652358,
+        "n_edges_mean": 161.8,
+        "primary_note": "self-identity ceiling (F1==1.0 by construction); excluded from gates"
+      }
+    },
+    "additive_singles": {
+      "anchored": [
+        {
+          "f1": 0.032051282051282055,
+          "precision": 0.3804347826086957,
+          "recall": 0.016730401529636712,
+          "tp": 35,
+          "n_pred": 92
+        },
+        {
+          "f1": 0.03814713896457766,
+          "precision": 0.38181818181818183,
+          "recall": 0.020076481835564052,
+          "tp": 42,
+          "n_pred": 110
+        },
+        {
+          "f1": 0.035519125683060114,
+          "precision": 0.375,
+          "recall": 0.01864244741873805,
+          "tp": 39,
+          "n_pred": 104
+        },
+        {
+          "f1": 0.032667876588021776,
+          "precision": 0.32142857142857145,
+          "recall": 0.017208413001912046,
+          "tp": 36,
+          "n_pred": 112
+        },
+        {
+          "f1": 0.040890504316219906,
+          "precision": 0.41284403669724773,
+          "recall": 0.021510516252390057,
+          "tp": 45,
+          "n_pred": 109
+        }
+      ],
+      "primary": [
+        {
+          "f1": 0.3529411764705882,
+          "precision": 0.5217391304347826,
+          "recall": 0.26666666666666666,
+          "tp": 48,
+          "n_pred": 92
+        },
+        {
+          "f1": 0.3443223443223443,
+          "precision": 0.42727272727272725,
+          "recall": 0.2883435582822086,
+          "tp": 47,
+          "n_pred": 110
+        },
+        {
+          "f1": 0.37795275590551186,
+          "precision": 0.46153846153846156,
+          "recall": 0.32,
+          "tp": 48,
+          "n_pred": 104
+        },
+        {
+          "f1": 0.3142857142857143,
+          "precision": 0.39285714285714285,
+          "recall": 0.2619047619047619,
+          "tp": 44,
+          "n_pred": 112
+        },
+        {
+          "f1": 0.32684824902723736,
+          "precision": 0.3853211009174312,
+          "recall": 0.28378378378378377,
+          "tp": 42,
+          "n_pred": 109
+        }
+      ],
+      "primary_chance": [
+        {
+          "f1": 0.029850746268656712,
+          "precision": 0.043478260869565216,
+          "recall": 0.022727272727272728,
+          "tp": 4,
+          "n_pred": 92
+        },
+        {
+          "f1": 0.08208955223880596,
+          "precision": 0.1,
+          "recall": 0.06962025316455696,
+          "tp": 11,
+          "n_pred": 110
+        },
+        {
+          "f1": 0.04819277108433735,
+          "precision": 0.057692307692307696,
+          "recall": 0.041379310344827586,
+          "tp": 6,
+          "n_pred": 104
+        },
+        {
+          "f1": 0.05128205128205128,
+          "precision": 0.0625,
+          "recall": 0.043478260869565216,
+          "tp": 7,
+          "n_pred": 112
+        },
+        {
+          "f1": 0.05555555555555556,
+          "precision": 0.06422018348623854,
+          "recall": 0.04895104895104895,
+          "tp": 7,
+          "n_pred": 109
+        }
+      ],
+      "n_edges": [
+        92,
+        110,
+        104,
+        112,
+        109
+      ],
+      "summary": {
+        "anchored_f1_mean": 0.035855185520632306,
+        "anchored_f1_sd": 0.0037198468386774176,
+        "anchored_per_seed": [
+          0.0321,
+          0.0381,
+          0.0355,
+          0.0327,
+          0.0409
+        ],
+        "primary_f1_mean": 0.34327004800227917,
+        "primary_f1_sd": 0.024532098174975803,
+        "primary_per_seed": [
+          0.3529,
+          0.3443,
+          0.378,
+          0.3143,
+          0.3268
+        ],
+        "primary_chance_mean": 0.05339413528588137,
+        "n_edges_mean": 105.4
+      }
+    }
+  },
+  "gate": {
+    "reference": "anchored (non-circular)",
+    "comparison": "real_doubles vs additive_singles",
+    "mean_gain": 0.019340000000000003,
+    "sd": 0.0058277783073826675,
+    "n_win": 5,
+    "pass_gate": true
+  },
+  "primary_within_regime": {
+    "note": "additive baseline's recovery of GIES-on-real-doubles structure vs chance",
+    "additive_primary_f1": 0.34327004800227917,
+    "additive_primary_chance_f1": 0.05339413528588137,
+    "real_doubles_primary_f1": 1.0
+  }
+}

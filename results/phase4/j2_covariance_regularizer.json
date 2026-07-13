@@ -1,0 +1,63 @@
+{
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    1024
+  ],
+  "lambda": 1.0,
+  "per_seed": [
+    {
+      "vanilla_cpa": 0.411683,
+      "gt_edges": 794,
+      "recon_only": 0.529634,
+      "cov_reg": 0.51617
+    },
+    {
+      "vanilla_cpa": 0.420979,
+      "gt_edges": 784,
+      "recon_only": 0.497494,
+      "cov_reg": 0.543272
+    },
+    {
+      "vanilla_cpa": 0.441667,
+      "gt_edges": 788,
+      "recon_only": 0.584596,
+      "cov_reg": 0.527044
+    },
+    {
+      "vanilla_cpa": 0.452646,
+      "gt_edges": 795,
+      "recon_only": 0.576633,
+      "cov_reg": 0.53325
+    },
+    {
+      "vanilla_cpa": 0.390378,
+      "gt_edges": 796,
+      "recon_only": 0.503741,
+      "cov_reg": 0.55402
+    }
+  ],
+  "vanilla_cpa": {
+    "mean": 0.42347060000000003,
+    "sd": 0.02460989992462382
+  },
+  "recon_only": {
+    "mean": 0.5384195999999999,
+    "sd": 0.04045744881106567
+  },
+  "cov_reg": {
+    "mean": 0.5347511999999999,
+    "sd": 0.014584291316344427
+  },
+  "cov_reg_minus_recon": {
+    "mean": -0.003668400000000016,
+    "sd": 0.049829494331168955,
+    "n_positive": 2
+  },
+  "cov_reg_minus_vanilla": {
+    "mean": 0.1112806,
+    "sd": 0.033619906473695
+  }
+}

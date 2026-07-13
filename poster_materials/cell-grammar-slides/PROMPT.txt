@@ -1,0 +1,136 @@
+ROLE
+You are an expert scientific-presentation designer. I am giving you 9 figure images
+(attached / in the same folder) plus full content notes about ONE paper. Build a complete,
+graded class presentation: a PowerPoint deck (.pptx, downloadable) PLUS a separate
+slide-by-slide spoken transcript. Follow every constraint exactly and self-check before finishing.
+
+THE FIGURES I AM GIVING YOU — USE THESE EXACT IMAGES (do not invent or redraw figures)
+- GraphicalAbstract.jpg ...... overview: rules -> Hill functions -> agent-based simulations, across dish/mouse/pancreas/brain
+- Figure1_grammar.jpg ......... the cell behavior hypothesis grammar concept + workflow
+- Figure2_hypoxia.jpg ......... hypoxia tumor model (necrotic core + motile invasion)
+- Figure3_PDAC_fibroblasts.jpg  fibroblasts (CAFs) drive EMT + invasion in pancreatic cancer
+- Figure4_tumor_immune_evasion.jpg  tumor evades killing by reshaping its immune microenvironment
+- Figure5_go_vs_grow_validation.jpg  "go vs grow" EGF test + wet-lab validation
+- Figure6_virtual_clinical_trial.jpg  virtual clinical trial across a patient cohort
+- Figure7_brain_cortex.jpg .... brain cortical layers (generalization beyond cancer)
+These are the open-access (CC BY 4.0) figures from the paper. Put a small attribution caption on each
+figure slide: "Johnson, Bergman et al., Cell 2025 (CC BY 4.0)". If you need a sharper version of any figure,
+you may re-fetch it from the open-access article, but otherwise use the files provided.
+
+THE PAPER
+- Title: "Human interpretable grammar encodes multicellular systems biology models to democratize virtual cell laboratories"
+- Authors: Jeanette A.I. Johnson & Daniel R. Bergman (co-first); senior/lead contact Paul Macklin (Indiana University, PhysiCell group); with Stein-O'Brien, Heiser, Fertig and ~50 co-authors (Johns Hopkins, OHSU, U Maryland).
+- Journal: Cell, Vol 188, Issue 17, pp 4711-4733, Aug 21 2025. DOI 10.1016/j.cell.2025.06.048. PII S0092-8674(25)00750-0.
+- Use this citation on the title slide and as a small citation on every figure slide.
+
+ONE-SENTENCE THESIS OF THE PAPER (the thing I am teaching)
+Plain-English sentences about how cells behave can be automatically turned into running, predictive
+computer simulations of living tissue - so biologists with no coding skills can build "virtual cell labs."
+
+HARD RUBRIC CONSTRAINTS (do not violate any)
+1. Length: 15-20 slides total. Talk must run 15-20 minutes (7-point penalty per minute outside the range).
+   Pace the transcript to land at ~18-19 minutes.
+2. Slide BODY text: MAXIMUM 20 words per slide. Title, citation, and figure legend do NOT count toward this.
+   0.5-point penalty per extra word. Count the body words on every slide and print the count in the
+   transcript header for that slide, e.g. "[body: 14 words]".
+3. Every slide needs a SPECIFIC, MEANINGFUL title tied to that slide's content - a takeaway, never a
+   generic label like "Background," "Methods," or "Results." (Example: use "Plain-English sentences become
+   running models," NOT "The Grammar.")
+4. Figures over text. Each content slide is figure-led; text is a short caption/label, not paragraphs.
+5. Use build animations: fade text and figure panels in/out to control focus; fade in boxes / arrows /
+   highlight circles to point the audience at the exact part of a figure being discussed. Specify each
+   animation in the slide's speaker-notes and in the transcript.
+6. Design: clean, high-contrast, ONE accent color, large readable type, consistent layout, generous
+   whitespace, no template clutter. Color-code the recurring cell types (tumor, fibroblast/CAF, T cell,
+   macrophage) with a small reusable legend.
+
+TEACHING APPROACH (TED-talk, AP-biology level)
+- TEACH, do not recite. Audience = AP-biology students. Define every term in plain language the first time
+  it appears: agent-based model, Hill / dose-response curve, hypoxia, EMT (epithelial-to-mesenchymal
+  transition), scRNA-seq, M1 vs M2 macrophage, exhausted T cell, CAF.
+- For EACH experiment, the transcript MUST follow this order:
+    (1) the METHOD, explained so an AP-bio student understands it;
+    (2) WALK THE FIGURE - what it shows, the X-axis, the Y-axis, what error bars / replicates mean, and
+        exactly where to look (name the arrow or box you fade in);
+    (3) the RESULT, stated comparatively ("when X happened, Z dropped >50% compared to ...");
+    (4) what it MEANS;
+    (5) a one-line TRANSITION into the next study.
+- Do NOT describe all methods, then all results, then all conclusions. Interleave them per experiment.
+- The transcript must read as natural SPOKEN language - what I will say out loud - NOT text to read off the
+  slide (the rubric gives a huge penalty for reading off slides). Slides hold figures + <=20 words; my
+  mouth carries the content.
+
+REQUIRED STRUCTURE, SLIDE PLAN & TIMING (target ~18.5 min, 16 slides; stay within 15-20 slides / 15-20 min)
+
+INTRODUCTION (~5 min) - motivate from the paper's introduction plus solid background:
+- S1 Title (~0.5 min): full title, my name, citation; use GraphicalAbstract.jpg as the visual.
+- S2 (~1 min): HOOK - cells live as time-evolving ecosystems; modern omics gives static SNAPSHOTS, not the
+  movie of how tissue changes over time. Visual: a snapshot-vs-trajectory schematic (you may build this one).
+- S3 (~1.5 min): Agent-based models CAN predict tissue dynamics, but the biology is buried in C++ code,
+  locked away from the biologists who actually understand it. State this barrier plainly. (Use Figure1.)
+- S4 (~1 min): THE QUESTION - what if a biologist could build a working model just by writing plain-English
+  sentences? Set up the paper's goal.
+- S5 (~1 min): THE ANSWER - the "cell behavior hypothesis grammar." Show the rule template verbatim:
+  "In [cell type], [signal] increases/decreases [behavior]."  Example: "In MCF-7 cells, cisplatin increases
+  apoptosis." (Use the relevant panel of Figure1_grammar.jpg.)
+
+METHODS / RESULTS / DISCUSSION (~14 min):
+- S6 (~1.5 min): HOW a sentence becomes math - each rule is a Hill (dose-response) curve; multiple rules
+  combine (up-signals vs down-signals) and interpolate; rules are additive (add one without touching the
+  others). Teach dose-response with a simple everyday analogy. (Figure1_grammar.jpg response-function panel.)
+- S7 (~1.5 min): THE ENGINE - PhysiCell agent-based simulator; rules typed into a CSV (one row per rule);
+  real omics data sets which cells exist and where (cell-type labels -> agents; spatial coordinates ->
+  positions). (Figure1_grammar.jpg workflow panel.)
+- S8 (~1.5 min): EXPERIMENT 1 - hypoxia. Method: oxygen-dependent rules ("oxygen decreases necrosis,"
+  "oxygen decreases transformation to motile cells"). Walk Figure2_hypoxia.jpg: snapshots + oxygen field
+  over time, and population-vs-time / radial-distribution plots (X = time or radius, Y = cell count/density);
+  box the invasive front and the necrotic core. Result: necrotic core forms; cells turn motile and invade;
+  motility is the most sensitive parameter.
+- S9 (~1.5 min): EXPERIMENT 2 - fibroblasts push pancreatic-cancer cells to invade. Define CAF and EMT.
+  Walk Figure3_PDAC_fibroblasts.jpg: invasiveness vs tumor:CAF ratio over time; box the 10:1 / 5:1 peak;
+  note significance vs tumor-only controls.
+- S10 (~2 min): EXPERIMENT 3 - emergent immune evasion. Method: add CD8+ T cells (contact killing) and
+  switchable M1/M2 macrophages. Walk Figure4_tumor_immune_evasion.jpg: tumor-volume-vs-time curve dips
+  >50% then REBOUNDS to baseline by day 5 as T cells exhaust and macrophages turn M2; arrow the dip-then-
+  rebound. Meaning: immunosuppression emerged from simple rules, was not programmed in.
+- S11 (~1.5 min): EXPERIMENT 4a - "go vs grow." Method: test whether EGF makes tumor cells DIVIDE (grow) or
+  MOVE (go). Walk the in-silico panels of Figure5_go_vs_grow_validation.jpg: the grow-only hypothesis fails
+  to reproduce invasion; go and go+grow reproduce it.
+- S12 (~1.5 min): EXPERIMENT 4b - WET-LAB VALIDATION of the model's prediction. Walk Figure5: gefitinib
+  (an EGFR inhibitor) cuts invasive protrusions in real organoids; EGF raises MCF10A cell motility. This is
+  the predict-then-confirm payoff - emphasize that the computer made a testable prediction that the bench
+  confirmed.
+- S13 (~2 min): EXPERIMENT 5 - a VIRTUAL CLINICAL TRIAL in pancreatic cancer. Method: build "virtual
+  patients" from patient scRNA-seq, then simulate each drug's mechanism. Walk Figure6_virtual_clinical_
+  trial.jpg: large patient-to-patient variation in response; responders had higher macrophage abundance
+  (Pearson correlation) -> NEW hypothesis: macrophages must clear tumor cells first so T cells can then kill.
+- S14 (~1.5 min): GENERALIZATION beyond cancer - the same grammar builds mouse-brain cortical layers, fit to
+  the Allen Brain Atlas. Walk Figure7_brain_cortex.jpg: layer-thickness model-vs-data for two cortical
+  regions (somatosensory and auditory). Message: this is a general tissue tool, not a cancer-only trick.
+
+CONCLUSION (~1 min):
+- S15 (~0.5 min): THREE TAKEAWAYS - plain English becomes real models; it integrates multi-omics data;
+  it generated experimentally-confirmed, sometimes surprising hypotheses. One line on limits (no gene-
+  regulatory networks yet; rules are OR-only; not precision-medicine-ready).
+- S16 (~0.5 min): TED-style close - democratizing "virtual cell labs," digital twins, and virtual clinical
+  trials. End on the citation.
+
+OUTPUT - produce BOTH deliverables:
+A) A downloadable .pptx with the provided figures embedded, animations described in each slide's speaker-
+   notes field, meaningful titles, and <=20-word bodies. (If you can apply real PowerPoint entrance/exit
+   animations, do so; otherwise put the exact animation cues in the speaker notes.)
+B) A SEPARATE transcript document, one block per slide, each headed:
+   "Slide N - [title] - [body: N words] - [target time]"
+   then the natural spoken script (method -> figure walk -> result -> meaning -> transition),
+   then a bullet list of the build animations for that slide (what fades in/out, and when relative to what
+   I am saying).
+
+SELF-CHECK BEFORE FINISHING (and report the results to me):
+[ ] 15-20 slides; estimated talk time 15-20 minutes.
+[ ] Every slide body <=20 words (print each slide's count).
+[ ] Every title is specific and meaningful (no generic labels).
+[ ] The provided paper figures are used and attributed (CC BY 4.0).
+[ ] Each experiment follows method -> figure walk -> result -> meaning -> transition.
+[ ] Transcript is natural spoken language, not slide text.
+[ ] Animations / arrows / boxes are specified for each figure walk.
+Print the per-slide body word counts and the estimated total minutes at the very end.

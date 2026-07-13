@@ -1,0 +1,45 @@
+{"phase": "val", "seed": 42, "lambda": 0.0, "val_f1": 0.541087}
+{"phase": "val", "seed": 42, "lambda": 0.1, "val_f1": 0.517632}
+{"phase": "val", "seed": 42, "lambda": 0.3, "val_f1": 0.507937}
+{"phase": "val", "seed": 42, "lambda": 1.0, "val_f1": 0.538704}
+{"phase": "val", "seed": 42, "lambda": 3.0, "val_f1": 0.514322}
+{"phase": "val", "seed": 42, "lambda": 10.0, "val_f1": 0.483976}
+{"phase": "val", "seed": 42, "lambda": 30.0, "val_f1": 0.527848}
+{"phase": "val", "seed": 42, "lambda": 100.0, "val_f1": 0.572339}
+{"phase": "val", "seed": 123, "lambda": 0.0, "val_f1": 0.472521}
+{"phase": "val", "seed": 123, "lambda": 0.1, "val_f1": 0.553787}
+{"phase": "val", "seed": 123, "lambda": 0.3, "val_f1": 0.554217}
+{"phase": "val", "seed": 123, "lambda": 1.0, "val_f1": 0.542912}
+{"phase": "val", "seed": 123, "lambda": 3.0, "val_f1": 0.485474}
+{"phase": "val", "seed": 123, "lambda": 10.0, "val_f1": 0.549395}
+{"phase": "val", "seed": 123, "lambda": 30.0, "val_f1": 0.545223}
+{"phase": "val", "seed": 123, "lambda": 100.0, "val_f1": 0.559085}
+{"phase": "val", "seed": 456, "lambda": 0.0, "val_f1": 0.562108}
+{"phase": "val", "seed": 456, "lambda": 0.1, "val_f1": 0.536432}
+{"phase": "val", "seed": 456, "lambda": 0.3, "val_f1": 0.541823}
+{"phase": "val", "seed": 456, "lambda": 1.0, "val_f1": 0.570891}
+{"phase": "val", "seed": 456, "lambda": 3.0, "val_f1": 0.514142}
+{"phase": "val", "seed": 456, "lambda": 10.0, "val_f1": 0.559697}
+{"phase": "val", "seed": 456, "lambda": 30.0, "val_f1": 0.579112}
+{"phase": "val", "seed": 456, "lambda": 100.0, "val_f1": 0.5602}
+{"phase": "val", "seed": 789, "lambda": 0.0, "val_f1": 0.536802}
+{"phase": "val", "seed": 789, "lambda": 0.1, "val_f1": 0.543871}
+{"phase": "val", "seed": 789, "lambda": 0.3, "val_f1": 0.550562}
+{"phase": "val", "seed": 789, "lambda": 1.0, "val_f1": 0.512272}
+{"phase": "val", "seed": 789, "lambda": 3.0, "val_f1": 0.518987}
+{"phase": "val", "seed": 789, "lambda": 10.0, "val_f1": 0.509068}
+{"phase": "val", "seed": 789, "lambda": 30.0, "val_f1": 0.554172}
+{"phase": "val", "seed": 789, "lambda": 100.0, "val_f1": 0.529154}
+{"phase": "val", "seed": 1024, "lambda": 0.0, "val_f1": 0.510423}
+{"phase": "val", "seed": 1024, "lambda": 0.1, "val_f1": 0.490331}
+{"phase": "val", "seed": 1024, "lambda": 0.3, "val_f1": 0.48353}
+{"phase": "val", "seed": 1024, "lambda": 1.0, "val_f1": 0.542964}
+{"phase": "val", "seed": 1024, "lambda": 3.0, "val_f1": 0.536955}
+{"phase": "val", "seed": 1024, "lambda": 10.0, "val_f1": 0.547842}
+{"phase": "val", "seed": 1024, "lambda": 30.0, "val_f1": 0.548306}
+{"phase": "val", "seed": 1024, "lambda": 100.0, "val_f1": 0.551595}
+{"phase": "test", "seed": 42, "vanilla": 0.430855, "recon": 0.497783, "covreg_star": 0.535283, "lambda_star": 100.0}
+{"phase": "test", "seed": 123, "vanilla": 0.413408, "recon": 0.514925, "covreg_star": 0.479592, "lambda_star": 100.0}
+{"phase": "test", "seed": 456, "vanilla": 0.369863, "recon": 0.506055, "covreg_star": 0.523329, "lambda_star": 100.0}
+{"phase": "test", "seed": 789, "vanilla": 0.402759, "recon": 0.534579, "covreg_star": 0.564447, "lambda_star": 100.0}
+{"phase": "test", "seed": 1024, "vanilla": 0.430468, "recon": 0.547182, "covreg_star": 0.513174, "lambda_star": 100.0}
