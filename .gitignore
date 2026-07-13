@@ -58,3 +58,8 @@ Thumbs.db
 # large prediction checkpoints (saved as artifacts instead)
 results/phaseB/b2_preds.json
 results/phaseB/gpu_preds.json
+
+# Shared-infra ops handoff (references someone else's GPU box — do not publish)
+GPU_BOX_ACCESS_HANDOFF.md
+# Duplicate of submissions/icml/CausalCellBench_ICML.pdf (stray root copy)
+/CausalCellBench_ICML.pdf
